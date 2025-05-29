@@ -1,0 +1,78 @@
+"use client";
+
+import type React from "react";
+
+import { useState } from "react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import {
+  Home,
+  Flag,
+  Target,
+  Disc,
+  CircleDot,
+  SettingsIcon,
+  LogOut,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+
+interface SideMenuItemProps {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  active?: boolean;
+}
+
+function SideMenuItem({ icon: Icon, label, href, active }: SideMenuItemProps) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg",
+        active
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+export function SideMenu() {
+  // In a real app, this would come from your router
+  const [activePath, setActivePath] = useState("/");
+
+  const menuItems = [
+    { icon: Home, label: "Overview", href: "/" },
+    { icon: Flag, label: "Tee Shots", href: "/tee-shots" },
+    { icon: Target, label: "Approaches", href: "/approaches" },
+    { icon: Disc, label: "Chipping", href: "/chipping" },
+    { icon: CircleDot, label: "Putting", href: "/putting" },
+    { icon: SettingsIcon, label: "Settings", href: "/settings" },
+  ];
+
+  return (
+    <div>
+      <Card className="w-56 h-fit shadow-sm p-0">
+        <div className="flex flex-col">
+          <div className="flex flex-col space-y-1">
+            {menuItems.map((item) => (
+              <SideMenuItem
+                key={item.href}
+                icon={item.icon}
+                label={item.label}
+                href={item.href}
+                active={activePath === item.href}
+              />
+            ))}
+          </div>
+          <div className="border-t">
+            <SideMenuItem icon={LogOut} label="Log Out" href="/logout" />
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
