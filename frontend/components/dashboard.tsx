@@ -1,11 +1,12 @@
 import { StatCard } from "./stat-card";
+import { InteractiveCharts } from "./interactive-charts";
 
 export function Dashboard() {
   return (
-    <div className="p-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-6">
+    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-baseline">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard title="Scoring Average" value="72.68" change={0.22} />
         <StatCard title="Fairways Hit" value="12.24" change={0.26} />
         <StatCard title="Greens in Regulation" value="14.24" change={0.48} />
@@ -18,6 +19,8 @@ export function Dashboard() {
           changeLabel="strokes gained this month"
         />
       </div>
+
+      <InteractiveCharts />
     </div>
   );
 }

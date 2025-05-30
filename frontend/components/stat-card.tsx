@@ -22,9 +22,9 @@ export function StatCard({
 
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardContent className="px-4 py-0">
+      <CardContent className="px-4">
         <div className="flex flex-col space-y-1">
-          <p className="text-s font-medium text-muted-foreground truncate">
+          <p className="text-lg font-medium text-muted-foreground truncate">
             {title}
           </p>
           <div className="flex items-baseline justify-between">

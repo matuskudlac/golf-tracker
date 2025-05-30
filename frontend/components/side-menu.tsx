@@ -13,8 +13,10 @@ import {
   CircleDot,
   SettingsIcon,
   LogOut,
+  Plus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface SideMenuItemProps {
   icon: React.ElementType;
@@ -52,9 +54,13 @@ export function SideMenu() {
     { icon: CircleDot, label: "Putting", href: "/putting" },
     { icon: SettingsIcon, label: "Settings", href: "/settings" },
   ];
+  const handleAddStatistics = () => {
+    // Add your logic here for adding statistics
+    console.log("Add Statistics clicked");
+  };
 
   return (
-    <div>
+    <div className="space-y-3">
       <Card className="w-56 h-fit shadow-sm p-0">
         <div className="flex flex-col">
           <div className="flex flex-col space-y-1">
@@ -73,6 +79,15 @@ export function SideMenu() {
           </div>
         </div>
       </Card>
+
+      <Button
+        onClick={handleAddStatistics}
+        className="w-56 h-12 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/20 shadow-sm transition-all duration-200 hover:shadow-md"
+        variant="outline"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Statistics
+      </Button>
     </div>
   );
 }
