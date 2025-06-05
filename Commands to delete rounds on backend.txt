@@ -1,0 +1,18 @@
+// To see all your rounds:
+console.log(JSON.parse(localStorage.getItem('golfData')).rounds)
+
+// To delete the most recent round (index 0):
+let data = JSON.parse(localStorage.getItem('golfData'))
+data.rounds.splice(0, 1)  // Remove first round
+localStorage.setItem('golfData', JSON.stringify(data))
+location.reload()  // Refresh page
+
+// To delete a specific round by date:
+let data = JSON.parse(localStorage.getItem('golfData'))
+data.rounds = data.rounds.filter(round => round.date !== '2024-12-05')  // Replace with your date
+localStorage.setItem('golfData', JSON.stringify(data))
+location.reload()
+
+// To clear all data:
+localStorage.removeItem('golfData')
+location.reload()

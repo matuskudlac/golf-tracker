@@ -110,7 +110,7 @@ export function SiteHeaderNavigation() {
             href="/"
             className="font-semibold text-xl px-4 py-2 block no-underline transition-colors hover:text-primary focus:outline-none focus:text-primary"
           >
-            Track App
+            Placeholder
           </Link>
         </NavigationMenuItem>
         <NavigationMenuItem>

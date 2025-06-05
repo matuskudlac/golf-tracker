@@ -80,14 +80,15 @@ export function SideMenu() {
         </div>
       </Card>
 
-      <Button
-        onClick={handleAddStatistics}
-        className="w-56 h-12 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/20 shadow-sm transition-all duration-200 hover:shadow-md"
-        variant="outline"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Statistics
-      </Button>
+      <Link href="/addround">
+        <Button
+          className="w-56 h-12 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/20 shadow-sm transition-all duration-200 hover:shadow-md"
+          variant="outline"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add Round
+        </Button>
+      </Link>
     </div>
   );
 }
