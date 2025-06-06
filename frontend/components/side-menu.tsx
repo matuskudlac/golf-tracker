@@ -14,6 +14,8 @@ import {
   SettingsIcon,
   LogOut,
   Plus,
+  Blocks,
+  Map,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +32,7 @@ function SideMenuItem({ icon: Icon, label, href, active }: SideMenuItemProps) {
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg",
+        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg last:border-t",
         active
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -52,12 +54,10 @@ export function SideMenu() {
     { icon: Target, label: "Approaches", href: "/approaches" },
     { icon: Disc, label: "Chipping", href: "/chipping" },
     { icon: CircleDot, label: "Putting", href: "/putting" },
+    { icon: Map, label: "Courses", href: "/courses" },
+    { icon: Blocks, label: "Practice", href: "/practice" },
     { icon: SettingsIcon, label: "Settings", href: "/settings" },
   ];
-  const handleAddStatistics = () => {
-    // Add your logic here for adding statistics
-    console.log("Add Statistics clicked");
-  };
 
   return (
     <div className="space-y-3">
@@ -73,9 +73,6 @@ export function SideMenu() {
                 active={activePath === item.href}
               />
             ))}
-          </div>
-          <div className="border-t">
-            <SideMenuItem icon={LogOut} label="Log Out" href="/logout" />
           </div>
         </div>
       </Card>
