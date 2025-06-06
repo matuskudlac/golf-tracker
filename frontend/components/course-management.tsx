@@ -121,7 +121,7 @@ export function CourseManagement() {
   };
 
   return (
-    <div className="pt-3 pb-6 px-6 space-y-6">
+    <div className="pt-3 pb-6 px-2 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Course Management</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { TopBar } from "@/components/top-bar";
 import { CourseManagement } from "@/components/course-management";
+import { SideMenu } from "@/components/side-menu";
 
 // Loading component for Suspense
 function CoursesLoading() {
@@ -25,11 +26,16 @@ export default function CoursesPage() {
       <div className="h-14 border-b bg-background">
         <TopBar />
       </div>
-      <main className="flex-1 overflow-auto bg-background pl-4 pt-3 sm:pl-16 md:pl-32 lg:pl-48 xl:pl-64 pr-4 sm:pr-16 md:pr-32 lg:pr-48 xl:pr-64">
-        <Suspense fallback={<CoursesLoading />}>
-          <CourseManagement />
-        </Suspense>
-      </main>
+      <div className="flex-1 flex bg-background">
+        <div className="pl-2 pt-3 sm:pl-8 md:pl-16 lg:pl-24 xl:pl-32">
+          <SideMenu />
+        </div>
+        <main className="flex-1 overflow-auto bg-background pl-4 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
+          <Suspense fallback={<CoursesLoading />}>
+            <CourseManagement />
+          </Suspense>
+        </main>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { DashboardDB } from "@/components/dashboard-db";
 // Loading component for Suspense
 function DashboardLoading() {
   return (
-    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-6">
+    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (

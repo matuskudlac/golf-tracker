@@ -8,6 +8,7 @@ interface StatCardProps {
   change?: number;
   changeLabel?: string;
   className?: string;
+  statType?: "lower-better" | "higher-better"; // New prop to define what's good
 }
 
 export function StatCard({
@@ -16,15 +17,25 @@ export function StatCard({
   change = 0,
   changeLabel = "from previous rounds",
   className,
+  statType = "higher-better", // Default to higher is better
 }: StatCardProps) {
-  const isPositive = change > 0;
   const isNeutral = change === 0;
+
+  // Determine if the change is positive based on stat type
+  let isPositive: boolean;
+  if (statType === "lower-better") {
+    // For golf stats where lower is better (scoring, putts, negative strokes gained)
+    isPositive = change < 0;
+  } else {
+    // For stats where higher is better (fairways, GIR, up&down %)
+    isPositive = change > 0;
+  }
 
   return (
     <Card className={cn("overflow-hidden", className)}>
       <CardContent className="px-4">
-        <div className="flex flex-col space-y-1">
-          <p className="text-lg font-medium text-muted-foreground truncate">
+        <div className="flex flex-col space-y-0.5">
+          <p className="text-s font-medium text-muted-foreground truncate">
             {title}
           </p>
           <div className="flex items-baseline justify-between">
@@ -49,12 +60,12 @@ export function StatCard({
                 )}
               </span>
               <span>
-                {isPositive ? "+" : ""}
+                {change > 0 ? "+" : ""}
                 {change}
               </span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-muted-foreground truncate pb-0.5">
             {changeLabel}
           </p>
         </div>

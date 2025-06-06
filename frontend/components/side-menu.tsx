@@ -1,9 +1,8 @@
 "use client";
 
 import type React from "react";
-
-import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -14,7 +13,6 @@ import {
   SettingsIcon,
   LogOut,
   Plus,
-  Blocks,
   Map,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -45,8 +43,7 @@ function SideMenuItem({ icon: Icon, label, href, active }: SideMenuItemProps) {
 }
 
 export function SideMenu() {
-  // In a real app, this would come from your router
-  const [activePath, setActivePath] = useState("/");
+  const pathname = usePathname();
 
   const menuItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -55,7 +52,6 @@ export function SideMenu() {
     { icon: Disc, label: "Chipping", href: "/chipping" },
     { icon: CircleDot, label: "Putting", href: "/putting" },
     { icon: Map, label: "Courses", href: "/courses" },
-    { icon: Blocks, label: "Practice", href: "/practice" },
     { icon: SettingsIcon, label: "Settings", href: "/settings" },
   ];
 
@@ -70,19 +66,19 @@ export function SideMenu() {
                 icon={item.icon}
                 label={item.label}
                 href={item.href}
-                active={activePath === item.href}
+                active={pathname === item.href}
               />
             ))}
           </div>
         </div>
       </Card>
 
-      <Link href="/addround">
+      <Link href="/add-round">
         <Button
           className="w-56 h-12 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/20 shadow-sm transition-all duration-200 hover:shadow-md"
           variant="outline"
         >
-          <Plus className="h-4 w-4 mr-1" />
+          <Plus className="h-4 w-4 mr-2" />
           Add Round
         </Button>
       </Link>

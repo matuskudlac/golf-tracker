@@ -125,7 +125,7 @@ export function AddRoundFormDB() {
   };
 
   return (
-    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-6">
+    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Add Round</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
@@ -165,8 +165,11 @@ export function AddRoundFormDB() {
                       onChange={setSelectedCourse}
                     />
                   )}
-                  <div className="text-xs text-muted-foreground">
-                    <a href="/courses" className="text-primary hover:underline">
+                  <div className="text-xs text-muted-foreground text-right">
+                    <a
+                      href="/courses"
+                      className=" hover:underline text-muted-foreground"
+                    >
                       Manage courses
                     </a>
                   </div>
@@ -179,7 +182,7 @@ export function AddRoundFormDB() {
                     name="scoringAverage"
                     type="number"
                     step="0.1"
-                    placeholder="e.g., 77.5"
+                    placeholder="e.g., 72"
                     required
                   />
                 </div>
@@ -191,7 +194,7 @@ export function AddRoundFormDB() {
                     name="fairwaysHit"
                     type="number"
                     step="0.1"
-                    placeholder="e.g., 9.5"
+                    placeholder="e.g., 12"
                     required
                   />
                 </div>
@@ -205,7 +208,7 @@ export function AddRoundFormDB() {
                     name="greensInRegulation"
                     type="number"
                     step="0.1"
-                    placeholder="e.g., 11.5"
+                    placeholder="e.g., 14"
                     required
                   />
                 </div>
@@ -219,7 +222,7 @@ export function AddRoundFormDB() {
                     name="upAndDownPercentage"
                     type="number"
                     step="0.1"
-                    placeholder="e.g., 64.2"
+                    placeholder="e.g., 75"
                     required
                   />
                 </div>
@@ -231,7 +234,7 @@ export function AddRoundFormDB() {
                     name="puttsPerRound"
                     type="number"
                     step="0.1"
-                    placeholder="e.g., 31.5"
+                    placeholder="e.g., 32"
                     required
                   />
                 </div>
