@@ -7,7 +7,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 export function TopBar() {
   return (
-    <div className="min-h-screen p-8 sm:p-5 font-[family-name:var(--font-geist-sans)]">
+    <div className="min-h-screen p-8 sm:p-5 font-[family-name:var(--font-geist-sans)] ">
       <div className="relative flex w-full justify-center">
         <div className="absolute left-2 top-1 sm:left-8 sm:top-2 md:left-16 lg:left-24 xl:left-32 -translate-y-1/2">
           <SiteHeaderNavigation />

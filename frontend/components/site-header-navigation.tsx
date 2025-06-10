@@ -11,7 +11,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
 const performanceItems: { title: string; href: string; description: string }[] =
@@ -104,21 +103,21 @@ ListItem.displayName = "ListItem";
 export function SiteHeaderNavigation() {
   return (
     <NavigationMenu>
-      <NavigationMenuList>
+      <NavigationMenuList className="flex-nowrap">
         <NavigationMenuItem>
           <Link
             href="/"
-            className="font-semibold text-xl px-4 py-2 block no-underline transition-colors hover:text-primary focus:outline-none focus:text-primary"
+            className="font-semibold text-lg sm:text-xl pr-2 sm:pr-4 py-2 block no-underline transition-colors hover:text-primary focus:outline-none focus:text-primary whitespace-nowrap"
           >
-            Placeholder
+            Track App
           </Link>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-base">
+          <NavigationMenuTrigger className="text-sm sm:text-base whitespace-nowrap">
             Performance
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+            <ul className="grid w-[300px] gap-3 p-4 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-50">
               {performanceItems.map((item) => (
                 <ListItem key={item.title} title={item.title} href={item.href}>
                   {item.description}
@@ -128,11 +127,11 @@ export function SiteHeaderNavigation() {
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-base">
+          <NavigationMenuTrigger className="text-sm sm:text-base whitespace-nowrap">
             Insights
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+            <ul className="grid w-[300px] gap-3 p-4 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-50">
               {insightsItems.map((item) => (
                 <ListItem key={item.title} title={item.title} href={item.href}>
                   {item.description}

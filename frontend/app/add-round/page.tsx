@@ -1,5 +1,5 @@
 import { TopBar } from "@/components/top-bar";
-import { AddRoundFormDB } from "@/components/add-round-form-db";
+import { AddRoundForm } from "@/components/add-round-form-db";
 import { SideMenu } from "@/components/side-menu";
 
 export default function AddRound() {
@@ -13,7 +13,7 @@ export default function AddRound() {
           <SideMenu />
         </div>
         <main className="flex-1 overflow-auto bg-background">
-          <AddRoundFormDB />
+          <AddRoundForm />
         </main>
       </div>
     </div>

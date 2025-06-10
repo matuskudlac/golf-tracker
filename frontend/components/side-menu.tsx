@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ChartNoAxesCombined } from "lucide-react";
 
 interface SideMenuItemProps {
   icon: React.ElementType;
@@ -51,6 +52,7 @@ export function SideMenu() {
     { icon: Target, label: "Approaches", href: "/approaches" },
     { icon: Disc, label: "Chipping", href: "/chipping" },
     { icon: CircleDot, label: "Putting", href: "/putting" },
+    { icon: ChartNoAxesCombined, label: "Practice", href: "/practice" },
     { icon: Map, label: "Courses", href: "/courses" },
     { icon: SettingsIcon, label: "Settings", href: "/settings" },
   ];
