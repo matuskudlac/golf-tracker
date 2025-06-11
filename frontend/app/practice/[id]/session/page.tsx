@@ -29,7 +29,7 @@ export default async function PracticeSessionPage({
         <div className="pl-2 pt-3 sm:pl-8 md:pl-16 lg:pl-24 xl:pl-32">
           <SideMenu />
         </div>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
           <Suspense fallback={<PracticeSessionLoading />}>
             <PracticeSessionDB drillId={drillId} />
           </Suspense>
