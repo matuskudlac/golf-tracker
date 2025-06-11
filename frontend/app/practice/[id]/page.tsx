@@ -5,7 +5,7 @@ import { DrillPerformanceDB } from "@/components/drill-performance-db";
 
 function DrillPerformanceLoading() {
   return (
-    <div className="pt-3 pb-6 px-6 space-y-6">
+    <div className="pt-3 pb-6 px-6 space-y-4">
       <div className="h-8 bg-gray-200 animate-pulse rounded-md w-64" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 h-96 bg-gray-200 animate-pulse rounded-lg" />
@@ -32,7 +32,7 @@ export default async function DrillPerformancePage({
         <div className="pl-2 pt-3 sm:pl-8 md:pl-16 lg:pl-24 xl:pl-32">
           <SideMenu />
         </div>
-        <main className="flex-1 overflow-auto pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
+        <main className="flex-1 overflow-auto ">
           <Suspense fallback={<DrillPerformanceLoading />}>
             <DrillPerformanceDB drillId={drillId} />
           </Suspense>

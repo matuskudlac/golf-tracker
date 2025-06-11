@@ -72,7 +72,7 @@ export function DrillPerformanceClient({
   };
 
   return (
-    <div className="pt-3 pb-6 px-6 space-y-6">
+    <div className="pt-3 pb-6 px-6 space-y-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{drill.name}</h1>

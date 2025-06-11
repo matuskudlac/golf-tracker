@@ -193,7 +193,7 @@ export function AddRoundForm() {
   };
 
   return (
-    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-6">
+    <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-4">
       {/* NOTE: Title with same styling as Dashboard but positioned to the left */}
       <h1 className="text-2xl font-bold tracking-tight">Add Round</h1>
 

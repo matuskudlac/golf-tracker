@@ -5,7 +5,7 @@ import { PracticeOverviewDB } from "@/components/practice-overview-db";
 
 function PracticeLoading() {
   return (
-    <div className="pt-3 pb-6 px-6 space-y-6">
+    <div className="pt-3 pb-6 px-6 space-y-4 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
       <div className="flex items-center justify-between">
         <div className="h-8 bg-gray-200 animate-pulse rounded-md w-48" />
         <div className="h-10 bg-gray-200 animate-pulse rounded-md w-32" />
@@ -29,7 +29,7 @@ export default function PracticePage() {
         <div className="pl-2 pt-3 sm:pl-8 md:pl-16 lg:pl-24 xl:pl-32">
           <SideMenu />
         </div>
-        <main className="flex-1 overflow-auto pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
+        <main className="flex-1 overflow-auto">
           <Suspense fallback={<PracticeLoading />}>
             <PracticeOverviewDB />
           </Suspense>

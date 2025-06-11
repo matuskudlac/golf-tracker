@@ -18,7 +18,7 @@ export async function PracticeOverviewDB() {
       error instanceof Error ? error.message : "Unknown error occurred";
 
     return (
-      <div className="pt-3 pb-6 px-6 space-y-6">
+      <div className="pt-3 pb-6 px-6 space-y-6 ">
         <h1 className="text-2xl font-bold tracking-tight">Practice Drills</h1>
         <div className="p-8 border border-red-300 rounded-lg bg-red-50">
           <h2 className="text-lg font-semibold text-red-700 mb-2">
