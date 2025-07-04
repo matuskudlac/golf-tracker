@@ -1,19 +1,15 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import {
-  addCourseToDB,
-  deleteCourseFromDB,
-  getCoursesAction,
-} from "@/app/actions";
-import { Trash2 } from "lucide-react";
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+import { addCourseToDB, deleteCourseFromDB, getCoursesAction, getScorecardAction } from "@/app/actions"
+import { Trash2, Plus } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,101 +20,180 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
+import { ScorecardDialog } from "./scorecard-dialog"
 
 interface Course {
-  id: number;
-  name: string;
-  par: number;
-  created_at: string;
-  updated_at: string;
+  id: number
+  name: string
+  par: number
+  course_rating: number
+  slope_rating: number
+  created_at: string
+  updated_at: string
+}
+
+interface Scorecard {
+  id: number
+  course_id: number
+  holes: {
+    hole_number: number
+    par: number
+    handicap: number
+  }[]
+  created_at: string
+  updated_at: string
 }
 
 export function CourseManagement() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newCourseName, setNewCourseName] = useState("");
-  const [newCoursePar, setNewCoursePar] = useState("72");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+  const [newCourseName, setNewCourseName] = useState("")
+  const [newCoursePar, setNewCoursePar] = useState("72")
+  const [newCourseRating, setNewCourseRating] = useState("")
+  const [newSlopeRating, setNewSlopeRating] = useState("113")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [scorecardDialog, setScorecardDialog] = useState<{
+    isOpen: boolean
+    courseId: number
+    courseName: string
+    existingScorecard: Scorecard | null
+    isEditing: boolean
+  }>({
+    isOpen: false,
+    courseId: 0,
+    courseName: "",
+    existingScorecard: null,
+    isEditing: false,
+  })
 
   // Load courses on component mount using server action
   useEffect(() => {
     async function loadCourses() {
       try {
-        setLoading(true);
-        const result = await getCoursesAction();
+        setLoading(true)
+        const result = await getCoursesAction()
         if (result.success && result.data) {
-          setCourses(result.data);
+          setCourses(result.data)
         } else {
-          toast.error("Failed to load courses");
+          toast.error("Failed to load courses")
         }
       } catch (error) {
-        console.error("Error loading courses:", error);
-        toast.error("Failed to load courses");
+        console.error("Error loading courses:", error)
+        toast.error("Failed to load courses")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    loadCourses();
-  }, []);
+    loadCourses()
+  }, [])
 
   // Handle form submission using server action
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!newCourseName.trim()) {
-      toast.error("Please enter a course name");
-      return;
+      toast.error("Please enter a course name")
+      return
     }
 
-    const par = Number.parseInt(newCoursePar);
+    const par = Number.parseInt(newCoursePar)
     if (isNaN(par) || par < 60 || par > 80) {
-      toast.error("Please enter a valid par value (60-80)");
-      return;
+      toast.error("Please enter a valid par value (60-80)")
+      return
     }
 
-    setIsSubmitting(true);
+    const courseRating = Number.parseFloat(newCourseRating)
+    if (isNaN(courseRating) || courseRating < 60 || courseRating > 80) {
+      toast.error("Please enter a valid course rating (60-80)")
+      return
+    }
+
+    const slopeRating = Number.parseInt(newSlopeRating)
+    if (isNaN(slopeRating) || slopeRating < 55 || slopeRating > 155) {
+      toast.error("Please enter a valid slope rating (55-155)")
+      return
+    }
+
+    setIsSubmitting(true)
 
     try {
-      const formData = new FormData();
-      formData.append("name", newCourseName.trim());
-      formData.append("par", par.toString());
+      const formData = new FormData()
+      formData.append("name", newCourseName.trim())
+      formData.append("par", par.toString())
+      formData.append("course_rating", courseRating.toString())
+      formData.append("slope_rating", slopeRating.toString())
 
-      const result = await addCourseToDB(formData);
+      const result = await addCourseToDB(formData)
 
       if (result.success && result.data) {
-        setCourses([...courses, result.data]);
-        setNewCourseName("");
-        setNewCoursePar("72");
-        toast.success("Course added successfully!");
+        setCourses([...courses, result.data])
+        setNewCourseName("")
+        setNewCoursePar("72")
+        setNewCourseRating("")
+        setNewSlopeRating("113")
+        toast.success("Course added successfully!")
       } else {
-        toast.error("Failed to add course");
+        toast.error("Failed to add course")
       }
     } catch (error) {
-      console.error("Error adding course:", error);
-      toast.error("Failed to add course");
+      console.error("Error adding course:", error)
+      toast.error("Failed to add course")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // Handle course deletion using server action
   const handleDeleteCourse = async (id: number) => {
     try {
-      const result = await deleteCourseFromDB(id);
+      const result = await deleteCourseFromDB(id)
 
       if (result.success) {
-        setCourses(courses.filter((course) => course.id !== id));
-        toast.success("Course deleted successfully");
+        setCourses(courses.filter((course) => course.id !== id))
+        toast.success("Course deleted successfully")
       } else {
-        toast.error("Failed to delete course");
+        toast.error("Failed to delete course")
       }
     } catch (error) {
-      console.error("Error deleting course:", error);
-      toast.error("Failed to delete course");
+      console.error("Error deleting course:", error)
+      toast.error("Failed to delete course")
     }
-  };
+  }
+
+  // Smart scorecard handler - checks if scorecard exists
+  const handleScorecardClick = async (courseId: number, courseName: string) => {
+    try {
+      // Check if scorecard already exists
+      const result = await getScorecardAction(courseId)
+
+      if (result.success) {
+        setScorecardDialog({
+          isOpen: true,
+          courseId,
+          courseName,
+          existingScorecard: result.data || null,
+          isEditing: result.data !== null,
+        })
+      } else {
+        toast.error("Failed to check scorecard status")
+      }
+    } catch (error) {
+      console.error("Error checking scorecard:", error)
+      toast.error("Failed to check scorecard status")
+    }
+  }
+
+  const handleCloseScorecardDialog = () => {
+    setScorecardDialog({
+      isOpen: false,
+      courseId: 0,
+      courseName: "",
+      existingScorecard: null,
+      isEditing: false,
+    })
+  }
 
   return (
     <div className="pt-3 pb-6 px-6 space-y-4 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
@@ -152,8 +227,40 @@ export function CourseManagement() {
                   onChange={(e) => setNewCoursePar(e.target.value)}
                   min="60"
                   max="80"
+                  placeholder="e.g., 72"
                   required
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="courseRating">Course Rating</Label>
+                  <Input
+                    id="courseRating"
+                    type="number"
+                    step="0.1"
+                    value={newCourseRating}
+                    onChange={(e) => setNewCourseRating(e.target.value)}
+                    min="60"
+                    max="80"
+                    placeholder="e.g., 71.2"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="slopeRating">Slope Rating</Label>
+                  <Input
+                    id="slopeRating"
+                    type="number"
+                    value={newSlopeRating}
+                    onChange={(e) => setNewSlopeRating(e.target.value)}
+                    min="55"
+                    max="155"
+                    placeholder="e.g., 128"
+                    required
+                  />
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -172,9 +279,7 @@ export function CourseManagement() {
             {loading ? (
               <div className="text-center py-4">Loading courses...</div>
             ) : courses.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
-                No courses added yet. Add your first course!
-              </div>
+              <div className="text-center py-4 text-muted-foreground">No courses added yet. Add your first course!</div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {courses.map((course) => (
@@ -182,41 +287,50 @@ export function CourseManagement() {
                     key={course.id}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">{course.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Par: {course.par}
-                      </p>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>Par: {course.par}</p>
+                        <p>
+                          Rating: {course.course_rating} / Slope: {course.slope_rating}
+                        </p>
+                      </div>
                     </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Course</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete {course.name}? This
-                            action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteCourse(course.id)}
-                            className="bg-red-500 hover:bg-red-600"
-                          >
-                            Delete Course
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleScorecardClick(course.id, course.name)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Scorecard
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete {course.name}? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteCourse(course.id)}
+                              className="bg-red-500 hover:bg-red-600"
+                            >
+                              Delete Course
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -224,6 +338,16 @@ export function CourseManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Scorecard Dialog */}
+      <ScorecardDialog
+        isOpen={scorecardDialog.isOpen}
+        onClose={handleCloseScorecardDialog}
+        courseId={scorecardDialog.courseId}
+        courseName={scorecardDialog.courseName}
+        existingScorecard={scorecardDialog.existingScorecard}
+        isEditing={scorecardDialog.isEditing}
+      />
     </div>
-  );
+  )
 }

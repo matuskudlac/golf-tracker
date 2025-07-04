@@ -131,7 +131,7 @@ export function SiteHeaderNavigation() {
         <NavigationMenuItem>
           <Link
             href="/courses"
-            className="font-medium text-sm sm:text-base whitespace-nowrap px-4 py-2 transition-colors hover:text-accent-foreground focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+            className="font-medium text-sm sm:text-base whitespace-nowrap px-4 py-2 transition-colors hover:text-primary focus:outline-none focus:text-primary"
           >
             Courses
           </Link>
