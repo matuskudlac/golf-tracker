@@ -10,6 +10,9 @@ import {
   addScorecard,
   getScorecard,
   updateScorecard,
+  addRoundScores,
+  getRoundScores,
+  calculateRoundHandicap,
 } from "@/lib/database"
 
 // NOTE: Server action to add a new golf round to database
@@ -268,6 +271,78 @@ export async function updateScorecardToDB(formData: FormData) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update scorecard",
+    }
+  }
+}
+
+// NEW: Server action to add round scores
+export async function addRoundScoresToDB(formData: FormData) {
+  try {
+    console.log("Server action: Starting to add round scores...")
+
+    const roundId = Number.parseInt(formData.get("roundId") as string)
+    const holes = []
+
+    // Extract hole data from form
+    for (let i = 1; i <= 18; i++) {
+      const par = Number.parseInt(formData.get(`hole_${i}_par`) as string)
+      const score = Number.parseInt(formData.get(`hole_${i}_score`) as string)
+
+      if (!isNaN(par) && !isNaN(score)) {
+        holes.push({
+          hole_number: i,
+          par: par,
+          score: score,
+        })
+      }
+    }
+
+    if (holes.length !== 18) {
+      return { success: false, error: "All 18 holes must be filled out" }
+    }
+
+    const roundScoreData = {
+      round_id: roundId,
+      holes: holes,
+    }
+
+    console.log("Server action: Round score data prepared:", roundScoreData)
+
+    const result = await addRoundScores(roundScoreData)
+    console.log("Server action: Round scores added successfully:", result)
+
+    // Calculate handicap for this round
+    const handicap = await calculateRoundHandicap(roundId)
+    console.log("Server action: Calculated handicap:", handicap)
+
+    // NOTE: Revalidate pages to show updated data
+    revalidatePath("/")
+    revalidatePath("/add-round")
+
+    return { success: true, data: result, handicap: handicap }
+  } catch (error) {
+    console.error("Server action: Error adding round scores to database:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to add round scores",
+    }
+  }
+}
+
+// NEW: Server action to get round scores
+export async function getRoundScoresAction(roundId: number) {
+  try {
+    console.log("Server action: Starting to get round scores for round:", roundId)
+
+    const result = await getRoundScores(roundId)
+    console.log("Server action: Round scores fetched successfully:", result ? "Found" : "Not found")
+
+    return { success: true, data: result }
+  } catch (error) {
+    console.error("Server action: Error getting round scores from database:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get round scores",
     }
   }
 }

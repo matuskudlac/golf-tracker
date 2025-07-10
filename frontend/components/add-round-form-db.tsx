@@ -1,334 +1,421 @@
-"use client";
+"use client"
 
-import { CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card"
+import { CardTitle } from "@/components/ui/card"
+import { CardHeader } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
+import type React from "react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+import { addGolfRoundToDB, getCoursesAction, addRoundScoresToDB } from "@/app/actions"
+import { CourseCombobox } from "./course-combobox"
+import { RoundScorecardDialog } from "./round-scorecard-dialog"
+import type { Course } from "@/lib/database"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DatePickerCard } from "@/components/date-picker-card"
+import { Edit3 } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
-import { CardTitle } from "@/components/ui/card";
+interface AddRoundFormProps {
+  onRoundAdded?: () => void
+}
 
-import { CardHeader } from "@/components/ui/card";
+export function AddRoundFormDB({ onRoundAdded }: AddRoundFormProps) {
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [courses, setCourses] = useState<Course[]>([])
+  const [includeScorecard, setIncludeScorecard] = useState(false)
+  const [showScorecardDialog, setShowScorecardDialog] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
 
-import { Card } from "@/components/ui/card";
+  // New state for the improved UX flow
+  const [scorecardData, setScorecardData] = useState<Record<number, { par: string; score: string }> | null>(null)
+  const [scorecardSaved, setScorecardSaved] = useState(false)
 
-import type React from "react";
+  // Basic round statistics
+  const [scoringAverage, setScoringAverage] = useState("")
+  const [fairwaysHit, setFairwaysHit] = useState("")
+  const [greensInRegulation, setGreensInRegulation] = useState("")
+  const [upAndDownPercentage, setUpAndDownPercentage] = useState("")
+  const [puttsPerRound, setPuttsPerRound] = useState("")
+  const [strokesGained, setStrokesGained] = useState("")
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { getGolfData, saveGolfData } from "@/lib/golf-data";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+  // Load courses on component mount
+  useEffect(() => {
+    loadCourses()
+  }, [])
 
-// Import the new DatePickerCard component
-import { DatePickerCard } from "@/components/date-picker-card";
+  // Auto-populate total score when scorecard is saved
+  useEffect(() => {
+    if (scorecardData && scorecardSaved) {
+      const totalScore = Object.values(scorecardData)
+        .map((hole) => Number.parseInt(hole.score))
+        .reduce((sum, score) => sum + score, 0)
 
-export function AddRoundForm() {
-  const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date()
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+      if (totalScore > 0) {
+        setScoringAverage(totalScore.toString())
+      }
+    }
+  }, [scorecardData, scorecardSaved])
 
-  // NOTE: State for all golf statistics we track
-  const [formData, setFormData] = useState({
-    scoringAverage: "",
-    fairwaysHit: "",
-    greensInRegulation: "",
-    upAndDownPercentage: "",
-    puttsPerRound: "",
-    strokesGained: "",
-  });
+  const loadCourses = async () => {
+    try {
+      setIsLoadingCourses(true)
+      const result = await getCoursesAction()
+      if (result.success) {
+        setCourses(result.data || [])
+      } else {
+        toast.error("Failed to load courses")
+      }
+    } catch (error) {
+      console.error("Error loading courses:", error)
+      toast.error("Failed to load courses")
+    } finally {
+      setIsLoadingCourses(false)
+    }
+  }
 
-  // NOTE: Handle input changes for all form fields
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // NOTE: Handle form submission with localStorage persistence
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!selectedDate) {
-      toast.error("Please select a date for the round");
-      return;
+    if (!selectedCourse) {
+      toast.error("Please select a golf course")
+      return
     }
 
-    // NOTE: Validate that all fields are filled
-    const requiredFields = Object.entries(formData);
-    const emptyFields = requiredFields.filter(([_, value]) => value === "");
-
-    if (emptyFields.length > 0) {
-      toast.error("Please fill in all fields");
-      return;
+    // If scorecard is included but not saved yet, open the scorecard dialog
+    if (includeScorecard && !scorecardSaved) {
+      setShowScorecardDialog(true)
+      return
     }
 
-    setIsSubmitting(true);
+    // Validate basic statistics
+    if (
+      !scoringAverage ||
+      !fairwaysHit ||
+      !greensInRegulation ||
+      !upAndDownPercentage ||
+      !puttsPerRound ||
+      !strokesGained
+    ) {
+      toast.error("Please fill in all round statistics")
+      return
+    }
+
+    // Submit the complete round (with or without scorecard)
+    await submitCompleteRound()
+  }
+
+  const submitCompleteRound = async () => {
+    if (!selectedCourse || !date) return
+
+    setIsSubmitting(true)
 
     try {
-      // NOTE: Get current data from localStorage
-      const currentData = getGolfData();
+      // First, create the basic round
+      const formData = new FormData()
+      formData.append("date", date.toISOString().split("T")[0])
+      formData.append("courseId", selectedCourse.id.toString())
+      formData.append("scoringAverage", scoringAverage)
+      formData.append("fairwaysHit", fairwaysHit)
+      formData.append("greensInRegulation", greensInRegulation)
+      formData.append("upAndDownPercentage", upAndDownPercentage)
+      formData.append("puttsPerRound", puttsPerRound)
+      formData.append("strokesGained", strokesGained)
 
-      // NOTE: Create round data object with proper types
-      const roundData = {
-        date: selectedDate.toISOString().split("T")[0], // Format as YYYY-MM-DD
-        scoringAverage: Number.parseFloat(formData.scoringAverage),
-        fairwaysHit: Number.parseFloat(formData.fairwaysHit),
-        greensInRegulation: Number.parseFloat(formData.greensInRegulation),
-        upAndDownPercentage: Number.parseFloat(formData.upAndDownPercentage),
-        puttsPerRound: Number.parseFloat(formData.puttsPerRound),
-        strokesGained: Number.parseFloat(formData.strokesGained),
-      };
+      const roundResult = await addGolfRoundToDB(formData)
 
-      // NOTE: Add the new round to the beginning of the rounds array
-      currentData.rounds.unshift(roundData);
+      if (roundResult.success) {
+        // If we have scorecard data, save it too
+        if (scorecardData && scorecardSaved) {
+          const scorecardFormData = new FormData()
+          scorecardFormData.append("roundId", roundResult.data?.id.toString() || "")
 
-      // NOTE: Recalculate current averages based on last 10 rounds
-      const recentRounds = currentData.rounds.slice(0, 10);
-      const avg = (arr: number[]) =>
-        arr.reduce((a, b) => a + b, 0) / arr.length;
+          // Add all hole data
+          for (let i = 1; i <= 18; i++) {
+            const hole = scorecardData[i]
+            scorecardFormData.append(`hole_${i}_par`, hole.par)
+            scorecardFormData.append(`hole_${i}_score`, hole.score)
+          }
 
-      const newCurrent = {
-        scoringAverage:
-          Math.round(avg(recentRounds.map((r) => r.scoringAverage)) * 10) / 10,
-        fairwaysHit:
-          Math.round(avg(recentRounds.map((r) => r.fairwaysHit)) * 10) / 10,
-        greensInRegulation:
-          Math.round(avg(recentRounds.map((r) => r.greensInRegulation)) * 10) /
-          10,
-        upAndDownPercentage:
-          Math.round(avg(recentRounds.map((r) => r.upAndDownPercentage)) * 10) /
-          10,
-        puttsPerRound:
-          Math.round(avg(recentRounds.map((r) => r.puttsPerRound)) * 10) / 10,
-        strokesGained:
-          Math.round(avg(recentRounds.map((r) => r.strokesGained)) * 10) / 10,
-      };
+          const scorecardResult = await addRoundScoresToDB(scorecardFormData)
 
-      // NOTE: Calculate changes compared to previous 10 rounds
-      const previousRounds = currentData.rounds.slice(10, 20);
-      if (previousRounds.length > 0) {
-        const previousCurrent = {
-          scoringAverage: avg(previousRounds.map((r) => r.scoringAverage)),
-          fairwaysHit: avg(previousRounds.map((r) => r.fairwaysHit)),
-          greensInRegulation: avg(
-            previousRounds.map((r) => r.greensInRegulation)
-          ),
-          upAndDownPercentage: avg(
-            previousRounds.map((r) => r.upAndDownPercentage)
-          ),
-          puttsPerRound: avg(previousRounds.map((r) => r.puttsPerRound)),
-          strokesGained: avg(previousRounds.map((r) => r.strokesGained)),
-        };
+          if (scorecardResult.success) {
+            toast.success("Round and scorecard submitted successfully!", {
+              description:
+                scorecardResult.handicap !== null
+                  ? `Your handicap for this round: ${scorecardResult.handicap}`
+                  : "Round saved successfully",
+            })
+          } else {
+            toast.error(scorecardResult.error || "Failed to save scorecard")
+            return
+          }
+        } else {
+          toast.success("Round submitted successfully!")
+        }
 
-        currentData.changes = {
-          scoringAverage:
-            Math.round(
-              (newCurrent.scoringAverage - previousCurrent.scoringAverage) * 10
-            ) / 10,
-          fairwaysHit:
-            Math.round(
-              (newCurrent.fairwaysHit - previousCurrent.fairwaysHit) * 10
-            ) / 10,
-          greensInRegulation:
-            Math.round(
-              (newCurrent.greensInRegulation -
-                previousCurrent.greensInRegulation) *
-                10
-            ) / 10,
-          upAndDownPercentage:
-            Math.round(
-              (newCurrent.upAndDownPercentage -
-                previousCurrent.upAndDownPercentage) *
-                10
-            ) / 10,
-          puttsPerRound:
-            Math.round(
-              (newCurrent.puttsPerRound - previousCurrent.puttsPerRound) * 10
-            ) / 10,
-          strokesGained:
-            Math.round(
-              (newCurrent.strokesGained - previousCurrent.strokesGained) * 10
-            ) / 10,
-        };
+        resetForm()
+        onRoundAdded?.()
+      } else {
+        toast.error(roundResult.error || "Failed to add round")
       }
-
-      // NOTE: Update current stats
-      currentData.current = newCurrent;
-
-      // NOTE: Save updated data to localStorage
-      saveGolfData(currentData);
-
-      // NOTE: Reset form
-      setFormData({
-        scoringAverage: "",
-        fairwaysHit: "",
-        greensInRegulation: "",
-        upAndDownPercentage: "",
-        puttsPerRound: "",
-        strokesGained: "",
-      });
-      setSelectedDate(new Date());
-
-      // NOTE: Show success toast instead of alert
-      toast.success("Round added successfully!", {
-        description: `Your round from ${selectedDate.toLocaleDateString()} has been saved.`,
-        duration: 3000,
-      });
-
-      // NOTE: Redirect to dashboard after a short delay
-      setTimeout(() => {
-        router.push("/");
-      }, 1000);
     } catch (error) {
-      console.error("Error adding round:", error);
-      // NOTE: Show error toast instead of alert
-      toast.error("Error adding round", {
-        description: "Please try again or check your input values.",
-      });
+      console.error("Error adding round:", error)
+      toast.error("Failed to add round")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
+
+  const handleScorecardComplete = async (newScorecardData: Record<number, { par: string; score: string }>) => {
+    // Save the scorecard data to state
+    setScorecardData(newScorecardData)
+    setScorecardSaved(true)
+    setShowScorecardDialog(false)
+
+    // Show success message
+    toast.success("Scorecard saved successfully!", {
+      description: "Review your stats and submit your round.",
+      duration: 4000,
+    })
+  }
+
+  const handleEditScorecard = () => {
+    setShowScorecardDialog(true)
+  }
+
+  const resetForm = () => {
+    setDate(new Date())
+    setSelectedCourse(null)
+    setIncludeScorecard(false)
+    setScorecardData(null)
+    setScorecardSaved(false)
+    setScoringAverage("")
+    setFairwaysHit("")
+    setGreensInRegulation("")
+    setUpAndDownPercentage("")
+    setPuttsPerRound("")
+    setStrokesGained("")
+  }
+
+  // Calculate button text and state
+  const getSubmitButtonText = () => {
+    if (isSubmitting) return "Submitting..."
+    if (includeScorecard && !scorecardSaved) return "Continue to Scorecard"
+    return "Submit Round"
+  }
+
+  const isSubmitDisabled = isSubmitting || !selectedCourse
 
   return (
     <div className="pt-3 pb-6 px-6 pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32 space-y-4">
-      {/* NOTE: Title with same styling as Dashboard but positioned to the left */}
+      {/* Title */}
       <h1 className="text-2xl font-bold tracking-tight">Add Round</h1>
 
       <div className="flex gap-8">
-        {/* NOTE: Left side - Calendar component under the title */}
+        {/* Left side - Date picker */}
         <div className="flex-shrink-0">
           <DatePickerCard
             title="Select Date"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
+            selected={date}
+            onSelect={setDate}
             disabled={(date) => date > new Date()}
           />
         </div>
 
-        {/* NOTE: Right side - Input fields for all statistics */}
+        {/* Right side - Form */}
         <div className="flex-1 max-w-md">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Round Statistics</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* NOTE: Scoring Average input */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Course Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="scoringAverage">Scoring Average</Label>
-                  <Input
-                    id="scoringAverage"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 77.5"
-                    value={formData.scoringAverage}
-                    onChange={(e) =>
-                      handleInputChange("scoringAverage", e.target.value)
-                    }
-                    required
-                  />
+                  <Label htmlFor="course">Golf Course *</Label>
+                  {isLoadingCourses ? (
+                    <div className="h-10 bg-gray-200 animate-pulse rounded-md" />
+                  ) : (
+                    <CourseCombobox
+                      courses={courses}
+                      selectedCourse={selectedCourse}
+                      onCourseSelect={setSelectedCourse}
+                    />
+                  )}
                 </div>
 
-                {/* NOTE: Fairways Hit input */}
-                <div className="space-y-2">
-                  <Label htmlFor="fairwaysHit">Fairways Hit</Label>
-                  <Input
-                    id="fairwaysHit"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 9.5"
-                    value={formData.fairwaysHit}
-                    onChange={(e) =>
-                      handleInputChange("fairwaysHit", e.target.value)
-                    }
-                    required
-                  />
+                {/* Scorecard Option */}
+                {selectedCourse && (
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <Checkbox
+                        id="include-scorecard"
+                        checked={includeScorecard}
+                        onCheckedChange={(checked) => {
+                          setIncludeScorecard(checked as boolean)
+                          if (!checked) {
+                            setScorecardData(null)
+                            setScorecardSaved(false)
+                          }
+                        }}
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="include-scorecard" className="text-sm font-medium text-blue-900">
+                          Include detailed scorecard (hole-by-hole scores)
+                        </Label>
+                        <p className="text-sm text-blue-700">
+                          Check this box to enter your exact score for each hole and get an accurate handicap
+                          calculation.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Success message if scorecard saved */}
+                {scorecardSaved && (
+                  <Alert className="border-green-200 bg-green-50">
+                    <AlertDescription className="text-green-800">
+                      ✅ Scorecard saved successfully! Review your stats below and submit your round.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Basic Statistics - Always visible */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="scoring-average">
+                      Total Score *
+                      {scorecardSaved && (
+                        <span className="text-xs text-green-600 ml-1">(Auto-filled from scorecard)</span>
+                      )}
+                    </Label>
+                    <Input
+                      id="scoring-average"
+                      type="number"
+                      value={scoringAverage}
+                      onChange={(e) => setScoringAverage(e.target.value)}
+                      placeholder="e.g., 85"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="fairways-hit">Fairways Hit *</Label>
+                    <Input
+                      id="fairways-hit"
+                      type="number"
+                      value={fairwaysHit}
+                      onChange={(e) => setFairwaysHit(e.target.value)}
+                      placeholder="e.g., 8"
+                      min="0"
+                      max="14"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="greens-in-regulation">Greens in Regulation *</Label>
+                    <Input
+                      id="greens-in-regulation"
+                      type="number"
+                      value={greensInRegulation}
+                      onChange={(e) => setGreensInRegulation(e.target.value)}
+                      placeholder="e.g., 12"
+                      min="0"
+                      max="18"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="up-and-down">Up & Down % *</Label>
+                    <Input
+                      id="up-and-down"
+                      type="number"
+                      value={upAndDownPercentage}
+                      onChange={(e) => setUpAndDownPercentage(e.target.value)}
+                      placeholder="e.g., 60"
+                      min="0"
+                      max="100"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="putts-per-round">Putts per Round *</Label>
+                    <Input
+                      id="putts-per-round"
+                      type="number"
+                      value={puttsPerRound}
+                      onChange={(e) => setPuttsPerRound(e.target.value)}
+                      placeholder="e.g., 32"
+                      min="18"
+                      max="60"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="strokes-gained">Strokes Gained *</Label>
+                    <Input
+                      id="strokes-gained"
+                      type="number"
+                      step="0.1"
+                      value={strokesGained}
+                      onChange={(e) => setStrokesGained(e.target.value)}
+                      placeholder="e.g., -2.5"
+                      required
+                    />
+                  </div>
                 </div>
 
-                {/* NOTE: Greens in Regulation input */}
-                <div className="space-y-2">
-                  <Label htmlFor="greensInRegulation">
-                    Greens in Regulation
-                  </Label>
-                  <Input
-                    id="greensInRegulation"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 11.5"
-                    value={formData.greensInRegulation}
-                    onChange={(e) =>
-                      handleInputChange("greensInRegulation", e.target.value)
-                    }
-                    required
-                  />
-                </div>
+                {/* Edit Scorecard Button - Only show if scorecard is saved */}
+                {scorecardSaved && (
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEditScorecard}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
+                    >
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit Scorecard
+                    </Button>
+                  </div>
+                )}
 
-                {/* NOTE: Up and Down Percentage input */}
-                <div className="space-y-2">
-                  <Label htmlFor="upAndDownPercentage">
-                    Up & Down Percentage
-                  </Label>
-                  <Input
-                    id="upAndDownPercentage"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 64.2"
-                    value={formData.upAndDownPercentage}
-                    onChange={(e) =>
-                      handleInputChange("upAndDownPercentage", e.target.value)
-                    }
-                    required
-                  />
-                </div>
-
-                {/* NOTE: Putts per Round input */}
-                <div className="space-y-2">
-                  <Label htmlFor="puttsPerRound">Putts per Round</Label>
-                  <Input
-                    id="puttsPerRound"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 31.5"
-                    value={formData.puttsPerRound}
-                    onChange={(e) =>
-                      handleInputChange("puttsPerRound", e.target.value)
-                    }
-                    required
-                  />
-                </div>
-
-                {/* NOTE: Strokes Gained input */}
-                <div className="space-y-2">
-                  <Label htmlFor="strokesGained">Strokes Gained vs Pro</Label>
-                  <Input
-                    id="strokesGained"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., -1.8"
-                    value={formData.strokesGained}
-                    onChange={(e) =>
-                      handleInputChange("strokesGained", e.target.value)
-                    }
-                    required
-                  />
-                </div>
-
-                {/* NOTE: Submit button */}
-                <Button
-                  type="submit"
-                  className="w-full mt-6"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Adding Round..." : "Add Round"}
+                {/* Submit Button */}
+                <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
+                  {getSubmitButtonText()}
                 </Button>
               </form>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Round Scorecard Dialog */}
+      {showScorecardDialog && selectedCourse && (
+        <RoundScorecardDialog
+          isOpen={showScorecardDialog}
+          onClose={() => setShowScorecardDialog(false)}
+          course={selectedCourse}
+          onComplete={handleScorecardComplete}
+          roundData={{
+            date: date || new Date(),
+            courseId: selectedCourse.id.toString(),
+          }}
+          existingData={scorecardData} // Pass existing data for editing
+        />
+      )}
     </div>
-  );
+  )
 }

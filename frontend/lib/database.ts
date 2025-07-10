@@ -46,6 +46,18 @@ export interface Scorecard {
   updated_at: string
 }
 
+export interface RoundScore {
+  id: number
+  round_id: number
+  holes: {
+    hole_number: number
+    par: number
+    score: number
+  }[]
+  created_at: string
+  updated_at: string
+}
+
 // NOTE: Get all rounds for a user (default user for now)
 export async function getRounds(userId = "default_user"): Promise<DatabaseGolfRound[]> {
   try {
@@ -440,5 +452,134 @@ export async function updateScorecard(scorecardData: {
   } catch (error) {
     console.error("Error updating scorecard:", error)
     throw new Error(`Failed to update scorecard: ${error instanceof Error ? error.message : "Unknown error"}`)
+  }
+}
+
+// NEW: Add round scores for a user's round
+export async function addRoundScores(roundScoreData: {
+  round_id: number
+  holes: { hole_number: number; par: number; score: number }[]
+}): Promise<RoundScore> {
+  try {
+    console.log("Adding round scores to database:", roundScoreData)
+
+    // First, ensure the table exists
+    await sql`
+      CREATE TABLE IF NOT EXISTS round_scores (
+          id SERIAL PRIMARY KEY,
+          round_id INTEGER NOT NULL REFERENCES golf_rounds(id) ON DELETE CASCADE,
+          hole_number INTEGER NOT NULL CHECK (hole_number >= 1 AND hole_number <= 18),
+          par INTEGER NOT NULL CHECK (par >= 3 AND par <= 6),
+          score INTEGER NOT NULL CHECK (score >= 1 AND score <= 15),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(round_id, hole_number)
+      )
+    `
+
+    // Insert all hole scores
+    for (const hole of roundScoreData.holes) {
+      await sql`
+        INSERT INTO round_scores (round_id, hole_number, par, score)
+        VALUES (${roundScoreData.round_id}, ${hole.hole_number}, ${hole.par}, ${hole.score})
+        ON CONFLICT (round_id, hole_number) 
+        DO UPDATE SET 
+          par = EXCLUDED.par,
+          score = EXCLUDED.score,
+          updated_at = CURRENT_TIMESTAMP
+      `
+    }
+
+    console.log("Round scores added successfully")
+    return {
+      id: 0, // We don't have a single ID for this collection
+      round_id: roundScoreData.round_id,
+      holes: roundScoreData.holes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+  } catch (error) {
+    console.error("Error adding round scores:", error)
+    throw new Error(`Failed to add round scores: ${error instanceof Error ? error.message : "Unknown error"}`)
+  }
+}
+
+// NEW: Get round scores for a specific round
+export async function getRoundScores(roundId: number): Promise<RoundScore | null> {
+  try {
+    console.log("Fetching round scores for round:", roundId)
+
+    const scoresResult = await sql`
+      SELECT * FROM round_scores 
+      WHERE round_id = ${roundId}
+      ORDER BY hole_number ASC
+    `
+
+    if (scoresResult.length === 0) {
+      return null
+    }
+
+    return {
+      id: 0, // Collection doesn't have single ID
+      round_id: roundId,
+      holes: scoresResult.map((score) => ({
+        hole_number: score.hole_number,
+        par: score.par,
+        score: score.score,
+      })),
+      created_at: scoresResult[0].created_at,
+      updated_at: scoresResult[0].updated_at,
+    }
+  } catch (error) {
+    console.error("Error fetching round scores:", error)
+    throw new Error("Failed to fetch round scores")
+  }
+}
+
+// NEW: Calculate handicap for a round based on scores
+export async function calculateRoundHandicap(roundId: number): Promise<number | null> {
+  try {
+    console.log("Calculating handicap for round:", roundId)
+
+    // Get round and course information
+    const roundResult = await sql`
+      SELECT r.*, c.course_rating, c.slope_rating
+      FROM golf_rounds r
+      LEFT JOIN courses c ON r.course_id = c.id
+      WHERE r.id = ${roundId}
+    `
+
+    if (roundResult.length === 0) {
+      throw new Error("Round not found")
+    }
+
+    const round = roundResult[0]
+
+    // Get round scores
+    const roundScores = await getRoundScores(roundId)
+    if (!roundScores) {
+      return null // No scores available
+    }
+
+    // Calculate total score
+    const totalScore = roundScores.holes.reduce((sum, hole) => sum + hole.score, 0)
+    const totalPar = roundScores.holes.reduce((sum, hole) => sum + hole.par, 0)
+
+    // If we have course rating and slope, calculate proper handicap differential
+    if (round.course_rating && round.slope_rating) {
+      const courseRating = Number(round.course_rating)
+      const slopeRating = Number(round.slope_rating)
+
+      // Handicap Differential = (Score - Course Rating) × 113 / Slope Rating
+      const handicapDifferential = ((totalScore - courseRating) * 113) / slopeRating
+      return Math.round(handicapDifferential * 10) / 10 // Round to 1 decimal place
+    } else {
+      // Fallback: simple calculation based on par
+      const strokesOverPar = totalScore - totalPar
+      return strokesOverPar
+    }
+  } catch (error) {
+    console.error("Error calculating round handicap:", error)
+    throw new Error("Failed to calculate round handicap")
   }
 }
