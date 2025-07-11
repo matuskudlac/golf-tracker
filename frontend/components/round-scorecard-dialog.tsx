@@ -215,7 +215,7 @@ export function RoundScorecardDialog({
     >
       <div
         ref={modalRef}
-        className={`relative bg-white rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] lg:w-[85vw] max-w-6xl max-h-[75vh] h-auto flex flex-col transition-all duration-300 ease-out ${showing ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+        className={`relative bg-white rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] lg:w-[85vw] max-w-6xl max-h-[95vh] h-auto flex flex-col transition-all duration-300 ease-out ${showing ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
