@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { TopBar } from "@/components/top-bar";
-import { AddRoundForm } from "@/components/add-round-form-db";
+import { AddRoundFormDB } from "@/components/add-round-form-db";
 import { SideMenu } from "@/components/side-menu";
 
 // Loading component for Suspense
@@ -36,7 +36,7 @@ export default function AddRound() {
         </div>
         <main className="flex-1 overflow-auto pr-2 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-32">
           <Suspense fallback={<AddRoundLoading />}>
-            <AddRoundForm />
+            <AddRoundFormDB />
           </Suspense>
         </main>
       </div>

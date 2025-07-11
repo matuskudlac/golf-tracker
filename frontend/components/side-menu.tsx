@@ -1,29 +1,19 @@
-"use client";
+"use client"
 
-import type React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import {
-  Home,
-  Flag,
-  Target,
-  Disc,
-  CircleDot,
-  SettingsIcon,
-  LogOut,
-  Plus,
-  Map,
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChartNoAxesCombined } from "lucide-react";
+import type React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { Home, Flag, Target, Disc, CircleDot, SettingsIcon, Plus } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { BarChartIcon as ChartNoAxesCombined } from "lucide-react"
 
 interface SideMenuItemProps {
-  icon: React.ElementType;
-  label: string;
-  href: string;
-  active?: boolean;
+  icon: React.ElementType
+  label: string
+  href: string
+  active?: boolean
 }
 
 function SideMenuItem({ icon: Icon, label, href, active }: SideMenuItemProps) {
@@ -32,19 +22,17 @@ function SideMenuItem({ icon: Icon, label, href, active }: SideMenuItemProps) {
       href={href}
       className={cn(
         "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg last:border-t",
-        active
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
       <Icon className="h-5 w-5" />
       <span>{label}</span>
     </Link>
-  );
+  )
 }
 
 export function SideMenu() {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   const menuItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -53,9 +41,8 @@ export function SideMenu() {
     { icon: Disc, label: "Chipping", href: "/chipping" },
     { icon: CircleDot, label: "Putting", href: "/putting" },
     { icon: ChartNoAxesCombined, label: "Practice", href: "/practice" },
-    { icon: Map, label: "Courses", href: "/courses" },
     { icon: SettingsIcon, label: "Settings", href: "/settings" },
-  ];
+  ]
 
   return (
     <div className="space-y-3">
@@ -85,5 +72,5 @@ export function SideMenu() {
         </Button>
       </Link>
     </div>
-  );
+  )
 }
