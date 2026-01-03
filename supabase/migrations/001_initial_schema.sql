@@ -17,7 +17,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE accounts (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  username TEXT UNIQUE,
   handicap_index DECIMAL(4,1), -- e.g., 15.4
   avatar_url TEXT,
   home_course_id UUID, -- FK added after courses table is created
@@ -302,10 +301,9 @@ CREATE TRIGGER update_round_holes_updated_at
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO accounts (id, username, created_at, updated_at)
+  INSERT INTO accounts (id, created_at, updated_at)
   VALUES (
     NEW.id,
-    NEW.raw_user_meta_data->>'username',
     NOW(),
     NOW()
   );
