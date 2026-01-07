@@ -131,7 +131,7 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
           <input
             id="remember-me"
             type="checkbox"
-            className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            className="h-3.5 w-3.5 rounded border-slate-300 accent-emerald-600 focus:ring-emerald-500"
           />
           <label
             htmlFor="remember-me"

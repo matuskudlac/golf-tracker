@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ReactNode } from 'react'
+import { FlipWords } from '@/components/ui/flip-words'
 
 interface AuthLayoutProps {
   children: ReactNode
@@ -29,9 +30,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {/* Tagline */}
         <div className="absolute bottom-12 left-8 right-8">
           <h2 className="text-4xl font-bold leading-tight text-white">
-            Track Every Shot
-            <br />
-            Master Every Round
+            Track Every<FlipWords words={["Shot", "Round"]} duration={1500} className="text-white" />
           </h2>
         </div>
       </div>

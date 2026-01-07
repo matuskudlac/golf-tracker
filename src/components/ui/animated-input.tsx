@@ -9,7 +9,7 @@ export interface InputProps
 
 const AnimatedInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
-    const radius = 120 // Hover effect radius
+    const radius = 200 // Hover effect radius
     const [visible, setVisible] = React.useState(false)
 
     let mouseX = useMotionValue(0)
@@ -27,7 +27,7 @@ const AnimatedInput = React.forwardRef<HTMLInputElement, InputProps>(
           background: useMotionTemplate`
             radial-gradient(
               ${visible ? radius + "px" : "0px"} circle at ${mouseX}px ${mouseY}px,
-              rgba(16, 185, 129, 0.15),
+              rgba(16, 185, 129, 0.4),
               transparent 80%
             )
           `,
