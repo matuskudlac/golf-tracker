@@ -162,7 +162,7 @@ export function SignUpForm({ onSuccess, showSuccess }: SignUpFormProps) {
             id="terms"
             type="checkbox"
             required
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            className="mt-1 h-4 w-4 rounded border-slate-300 accent-emerald-600 focus:ring-emerald-500"
           />
           <label
             htmlFor="terms"

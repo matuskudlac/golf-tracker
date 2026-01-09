@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { getCurrentUser, signOut } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
 import { motion } from 'motion/react'
 import {
   Navbar,
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/resizable-navbar'
 import { UserMenu } from '@/components/navigation/UserMenu'
 
-export default function DashboardPage() {
+export default function StatisticsPage() {
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
@@ -101,13 +100,6 @@ export default function DashboardPage() {
                 {item.name}
               </a>
             ))}
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              className="w-full border-slate-300"
-            >
-              Sign out
-            </Button>
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
@@ -116,42 +108,13 @@ export default function DashboardPage() {
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            Welcome to Golf Tracker! 🏌️‍♂️
+            Statistics 📊
           </h2>
           <p className="text-slate-600 mb-8">
-            Scroll down to see the navbar animation effect!
+            View your performance analytics and insights here.
           </p>
-          <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-emerald-700 border border-emerald-200">
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <span className="font-medium">Navbar is working!</span>
-          </div>
-        </div>
-
-        {/* Temporary scrollable content */}
-        <div className="space-y-8 mt-12">
-          <div className="h-96 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-            <p className="text-white text-2xl font-bold">Section 1 - Scroll Down</p>
-          </div>
-          <div className="h-96 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
-            <p className="text-white text-2xl font-bold">Section 2 - Keep Scrolling</p>
-          </div>
-          <div className="h-96 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <p className="text-white text-2xl font-bold">Section 3 - Almost There</p>
-          </div>
-          <div className="h-96 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <p className="text-white text-2xl font-bold">Section 4 - Watch the Navbar!</p>
+          <div className="inline-flex items-center gap-2 rounded-lg bg-purple-50 px-4 py-2 text-purple-700 border border-purple-200">
+            <span className="font-medium">Coming soon!</span>
           </div>
         </div>
       </main>
