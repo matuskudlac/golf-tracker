@@ -134,7 +134,7 @@ export const NavItems = ({ items, className, onItemClick, currentPath }: NavItem
             className={cn(
               "relative px-4 py-2 transition-colors duration-200",
               isActive
-                ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                ? "text-brand-700 dark:text-brand-400 font-medium"
                 : "text-neutral-600 dark:text-neutral-300"
             )}
             key={`link-${idx}`}

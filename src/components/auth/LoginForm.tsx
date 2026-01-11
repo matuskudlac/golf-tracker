@@ -70,7 +70,7 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
           Don't have an account?{' '}
           <Link
             href="/signup"
-            className="font-medium text-emerald-600 hover:text-emerald-500 transition-colors"
+            className="font-medium text-brand-700 hover:text-brand-700 transition-colors"
           >
             Sign up
           </Link>
@@ -110,7 +110,7 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
             </Label>
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-emerald-600 hover:text-emerald-500 transition-colors"
+              className="text-xs font-medium text-brand-700 hover:text-brand-700 transition-colors"
             >
               Forgot password?
             </Link>
@@ -131,7 +131,7 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
           <input
             id="remember-me"
             type="checkbox"
-            className="h-3.5 w-3.5 rounded border-slate-300 accent-emerald-600 focus:ring-emerald-500"
+            className="h-3.5 w-3.5 rounded border-slate-300 accent-brand-700 focus:ring-brand-700"
           />
           <label
             htmlFor="remember-me"
@@ -146,11 +146,11 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
           <Button
             type="submit"
             disabled={loading || showSuccess}
-            className="relative h-11 w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+            className="relative h-11 w-full bg-gradient-to-r from-brand-700 to-brand-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
           >
             {/* Loading/Success overlay - darker green */}
             <div 
-              className={`absolute inset-0 bg-gradient-to-r from-emerald-700 to-emerald-600 transition-opacity duration-500 ${
+              className={`absolute inset-0 bg-gradient-to-r from-brand-800 to-brand-800 transition-opacity duration-500 ${
                 (loading || showSuccess) && !showError ? 'opacity-100' : 'opacity-0'
               }`} 
             />
@@ -164,7 +164,7 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
             
             {/* Hover overlay - only show in default state */}
             {!showError && !showSuccess && !loading && (
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-700 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-600 opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
             )}
             
             {/* Button content */}
@@ -214,7 +214,7 @@ export function LoginForm({ onSuccess, showSuccess }: LoginFormProps) {
 const BottomGradient = () => {
   return (
     <>
-      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
+      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-brand-700 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
       <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
     </>
   )

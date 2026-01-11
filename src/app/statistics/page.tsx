@@ -52,7 +52,7 @@ export default function StatisticsPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-700 border-t-transparent mx-auto mb-4"></div>
           <p className="text-slate-600">Loading...</p>
         </div>
       </div>

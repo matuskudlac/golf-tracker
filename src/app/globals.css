@@ -1,42 +1,100 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/forms";
+
+/* Recharts override to prevent focus outline on charts */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface {
+  outline: none !important;
+}
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
+
+  /* Premium Nature Brand Colors - British Racing Green */
+  /* Use as: text-brand-800, bg-brand-50, border-brand-700, etc. */
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #06402b;
+  /* Main British Racing Green */
+  --color-brand-900: #042818;
+  --color-brand-950: #021a0f;
+
+  /* Accent Colors - Emerald (for charts & interactions) */
+  /* Use as: text-accent-500, bg-accent-50, etc. */
+  --color-accent-50: #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  /* Main accent */
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065f46;
+  --color-accent-900: #064e3b;
+  --color-accent-950: #022c22;
+
+  /* Negative/Error Colors - Rose */
+  /* Use as: text-negative-600, bg-negative-50, etc. */
+  --color-negative-50: #fff1f2;
+  --color-negative-100: #ffe4e6;
+  --color-negative-200: #fecdd3;
+  --color-negative-300: #fda4af;
+  --color-negative-400: #fb7185;
+  --color-negative-500: #f43f5e;
+  --color-negative-600: #e11d48;
+  /* Main error color */
+  --color-negative-700: #be123c;
+  --color-negative-800: #9f1239;
+  --color-negative-900: #881337;
+  --color-negative-950: #4c0519;
+
+  /* Shadcn UI compatibility colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Border radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -44,17 +102,184 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Golf Stat Semantic Colors - available as utilities (text-stat-score) */
+  --color-stat-score: var(--stat-score);
+  --color-stat-fairways: var(--stat-fairways);
+  --color-stat-gir: var(--stat-gir);
+  --color-stat-putts: var(--stat-putts);
+
+  /* Tremor Animations */
+  --animate-hide: hide 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-down-and-fade: slideDownAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-left-and-fade: slideLeftAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up-and-fade: slideUpAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-right-and-fade: slideRightAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-accordion-open: accordionOpen 150ms cubic-bezier(0.87, 0, 0.13, 1);
+  --animate-accordion-close: accordionClose 150ms cubic-bezier(0.87, 0, 0.13, 1);
+  --animate-dialog-overlay-show: dialogOverlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-dialog-content-show: dialogContentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-drawer-slide-left-and-fade: drawerSlideLeftAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-drawer-slide-right-and-fade: drawerSlideRightAndFade 150ms ease-in;
+
+  @keyframes hide {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes slideDownAndFade {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideLeftAndFade {
+    from {
+      opacity: 0;
+      transform: translateX(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideUpAndFade {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideRightAndFade {
+    from {
+      opacity: 0;
+      transform: translateX(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes accordionOpen {
+    from {
+      height: 0px;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordionClose {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0px;
+    }
+  }
+
+  @keyframes dialogOverlayShow {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes dialogContentShow {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -45%) scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  @keyframes drawerSlideLeftAndFade {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes drawerSlideRightAndFade {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+
+  /* Premium Nature Color Palette */
+  --brand-dark: #06402b;
+  /* British Racing Green - primary brand */
+  --brand-accent: #10B981;
+  /* Emerald-500 - charts & interactions */
+  --brand-subtle: #ecfdf5;
+  /* Emerald-50 - success backgrounds */
+  --negative: #e11d48;
+  /* Rose-600 - errors & bad stats */
+
+  /* Golf Stat Semantic Colors */
+  --stat-score: #15803d;
+  /* Brand-700 */
+  --stat-fairways: #a16207;
+  /* Yellow-700 */
+  --stat-gir: #0369a1;
+  /* Sky-700 */
+  --stat-putts: #be123c;
+  /* Negative-700 */
+
+  /* Original shadcn colors (keeping for compatibility) */
+  --background: #fafafa;
+  /* Changed to Zinc-50 */
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
+  --primary: #06402b;
+  /* Changed to brand-dark */
   --primary-foreground: oklch(0.984 0.003 247.858);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
@@ -62,7 +287,8 @@
   --muted-foreground: oklch(0.554 0.046 257.417);
   --accent: oklch(0.968 0.007 247.896);
   --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: #e11d48;
+  /* Changed to negative */
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.704 0.04 256.788);
@@ -88,15 +314,18 @@
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
+  --primary: #10B981;
+  /* brand-accent for dark mode */
+  --primary-foreground: #06402b;
+  /* brand-dark */
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.704 0.04 256.788);
   --accent: oklch(0.279 0.041 260.031);
   --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: #e11d48;
+  /* negative */
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
@@ -113,12 +342,23 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+
+  /* Dark Mode Chart Colors (Brighter for contrast) */
+  --stat-score: #22c55e;
+  /* Brand-500 */
+  --stat-fairways: #ca8a04;
+  /* Yellow-600 */
+  --stat-gir: #0ea5e9;
+  /* Sky-500 */
+  --stat-putts: #f43f5e;
+  /* Negative-500 */
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

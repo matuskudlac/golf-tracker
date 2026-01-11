@@ -28,7 +28,7 @@ export function SuccessMessage({ message, onComplete }: SuccessMessageProps) {
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
           >
-            <CheckCircle2 className="h-16 w-16 text-emerald-500" />
+            <CheckCircle2 className="h-16 w-16 text-accent-700" />
           </motion.div>
           <div className="space-y-2">
             <h3 className="text-2xl font-bold text-slate-900">Success!</h3>
@@ -38,7 +38,7 @@ export function SuccessMessage({ message, onComplete }: SuccessMessageProps) {
             initial={{ width: 0 }}
             animate={{ width: "100%" }}
             transition={{ duration: 1.5 }}
-            className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"
+            className="h-1 bg-gradient-to-r from-accent-700 to-accent-800 rounded-full"
           />
         </div>
       </motion.div>

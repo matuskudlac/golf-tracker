@@ -78,7 +78,7 @@ export function UserMenu({ user }: UserMenuProps) {
             <button className="relative cursor-pointer">
               <Avatar className="h-9 w-9 transition-all duration-200">
                 <AvatarImage src={user?.user_metadata?.avatar_url} alt={getFullName()} />
-                <AvatarFallback className="bg-emerald-600 text-white font-medium text-sm hover:bg-emerald-700 transition-colors duration-200">
+                <AvatarFallback className="bg-brand-700 text-white font-medium text-sm hover:bg-brand-900 transition-colors duration-200">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
@@ -105,7 +105,7 @@ export function UserMenu({ user }: UserMenuProps) {
             {/* Avatar */}
             <Avatar className="mx-auto mb-3 h-16 w-16">
               <AvatarImage src={user?.user_metadata?.avatar_url} alt={getFullName()} />
-              <AvatarFallback className="bg-emerald-600 text-white font-semibold text-xl">
+              <AvatarFallback className="bg-brand-700 text-white font-semibold text-xl">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
@@ -124,11 +124,11 @@ export function UserMenu({ user }: UserMenuProps) {
             <div className="flex items-center justify-center gap-4 text-sm">
               <div className="flex items-center gap-1.5">
                 <span className="text-slate-700 font-medium">HCP:</span>
-                <span className="text-emerald-600 font-semibold">{handicap}</span>
+                <span className="text-brand-700 font-semibold">{handicap}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-slate-700 font-medium">Scoring Avg:</span>
-                <span className="text-emerald-600 font-semibold">{avgScore}</span>
+                <span className="text-brand-700 font-semibold">{avgScore}</span>
               </div>
             </div>
           </div>
