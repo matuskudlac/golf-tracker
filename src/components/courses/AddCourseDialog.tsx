@@ -1,0 +1,423 @@
+'use client'
+
+import { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { AnimatedInput } from '@/components/ui/animated-input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Toggle } from '@/components/ui/toggle'
+import { Loader2, Upload } from 'lucide-react'
+
+type AddMode = 'quick' | 'upload' | 'manual'
+
+interface AddCourseDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  mode: AddMode
+  onSuccess: () => void
+}
+
+interface HoleData {
+  hole_number: number
+  par: number
+  distance: number
+  handicap: number
+}
+
+export function AddCourseDialog({
+  open,
+  onOpenChange,
+  mode,
+  onSuccess,
+}: AddCourseDialogProps) {
+  const [courseName, setCourseName] = useState('')
+  const [city, setCity] = useState('')
+  const [country, setCountry] = useState('')
+  const [totalHoles, setTotalHoles] = useState<9 | 18>(18)
+  const [loading, setLoading] = useState(false)
+  const [processingOCR, setProcessingOCR] = useState(false)
+  const [ocrCompleted, setOcrCompleted] = useState(false)
+  const [holeData, setHoleData] = useState<HoleData[]>(
+    Array.from({ length: 18 }, (_, i) => ({
+      hole_number: i + 1,
+      par: 4,
+      distance: 0,
+      handicap: i + 1,
+    }))
+  )
+
+  const handleFileUpload = async (files: File[]) => {
+    if (files.length === 0) return
+
+    setProcessingOCR(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', files[0])
+
+      const response = await fetch('/api/ocr/course', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setHoleData(data.holes)
+        setOcrCompleted(true)
+      }
+    } catch (error) {
+      console.error('OCR failed:', error)
+    } finally {
+      setProcessingOCR(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    try {
+      // Create course
+      const courseResponse = await fetch('/api/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: courseName,
+          city: city || null,
+          country: country || null,
+          total_holes: totalHoles,
+        }),
+      })
+
+      if (!courseResponse.ok) throw new Error('Failed to create course')
+
+      const course = await courseResponse.json()
+
+      // If mode is not quick, create hole data
+      if (mode !== 'quick') {
+        const holesToCreate = holeData.slice(0, totalHoles)
+        
+        await fetch('/api/courses/' + course.id + '/holes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ holes: holesToCreate }),
+        })
+      }
+
+      onSuccess()
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      console.error('Failed to create course:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetForm = () => {
+    setCourseName('')
+    setCity('')
+    setCountry('')
+    setTotalHoles(18)
+    setOcrCompleted(false)
+    setHoleData(
+      Array.from({ length: 18 }, (_, i) => ({
+        hole_number: i + 1,
+        par: 4,
+        distance: 0,
+        handicap: i + 1,
+      }))
+    )
+  }
+
+  const updateHoleData = (index: number, field: keyof HoleData, value: number) => {
+    const newHoleData = [...holeData]
+    newHoleData[index] = { ...newHoleData[index], [field]: value }
+    setHoleData(newHoleData)
+  }
+
+  const dialogSize = mode === 'quick' ? 'sm:max-w-md' : 'sm:max-w-4xl'
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={`${dialogSize} max-h-[90vh] overflow-y-auto`}>
+        <DialogHeader>
+          <DialogTitle>
+            {mode === 'quick' && 'Quick Add Course'}
+            {mode === 'upload' && 'Add Course with Scorecard'}
+            {mode === 'manual' && 'Add Course Manually'}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === 'quick' && 'Add basic course information'}
+            {mode === 'upload' && 'Upload a scorecard to auto-fill hole data'}
+            {mode === 'manual' && 'Enter course and hole information manually'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Basic Course Info */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="courseName">Course Name *</Label>
+              <AnimatedInput
+                id="courseName"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                placeholder="e.g., Pebble Beach Golf Links"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <AnimatedInput
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g., Pebble Beach"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <AnimatedInput
+                  id="country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="e.g., USA"
+                />
+              </div>
+            </div>
+
+            {mode !== 'quick' && (
+              <div>
+                <Label>Number of Holes</Label>
+                <div className="flex gap-2 mt-2">
+                  <Toggle
+                    pressed={totalHoles === 9}
+                    onPressedChange={() => setTotalHoles(9)}
+                    className="data-[state=on]:bg-brand-700 data-[state=on]:text-white"
+                  >
+                    9 Holes
+                  </Toggle>
+                  <Toggle
+                    pressed={totalHoles === 18}
+                    onPressedChange={() => setTotalHoles(18)}
+                    className="data-[state=on]:bg-brand-700 data-[state=on]:text-white"
+                  >
+                    18 Holes
+                  </Toggle>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Upload Scorecard */}
+          {mode === 'upload' && (
+            <div className="space-y-4">
+              <Label>Upload Scorecard</Label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = e.target.files
+                    if (files && files.length > 0) {
+                      handleFileUpload([files[0]])
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="border-2 border-dashed border-brand-700 rounded-lg p-8 text-center hover:bg-brand-50 transition-colors cursor-pointer">
+                  <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
+                  <p className="text-sm font-medium text-brand-700">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    PNG, JPG or JPEG (MAX. 10MB)
+                  </p>
+                </div>
+              </div>
+              {processingOCR && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
+                  <span className="ml-2 text-sm text-slate-600">
+                    Processing scorecard...
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Scorecard Grid */}
+          {mode !== 'quick' && !processingOCR && (mode === 'manual' || ocrCompleted) && (
+            <ScorecardGrid
+              holeData={holeData}
+              totalHoles={totalHoles}
+              onUpdate={updateHoleData}
+            />
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!courseName || loading}
+              className="bg-brand-700 hover:bg-brand-800 text-white"
+            >
+              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Add Course
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// Scorecard Grid Component
+interface ScorecardGridProps {
+  holeData: HoleData[]
+  totalHoles: 9 | 18
+  onUpdate: (index: number, field: keyof HoleData, value: number) => void
+}
+
+function ScorecardGrid({ holeData, totalHoles, onUpdate }: ScorecardGridProps) {
+  const front9 = holeData.slice(0, 9)
+  const back9 = holeData.slice(9, 18)
+
+  const calculateTotal = (holes: HoleData[], field: 'par' | 'distance') => {
+    return holes.reduce((sum, hole) => sum + (hole[field] || 0), 0)
+  }
+
+  const renderNine = (holes: HoleData[], startIndex: number, title: string, showTotal: boolean) => (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-brand-700">{title}</h3>
+      <div className="border-2 border-brand-700 rounded-lg overflow-hidden bg-white">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr className="bg-brand-700 text-white">
+              <th className="px-2 py-2 text-center border-r border-white/30">Hole</th>
+              {holes.map((hole) => (
+                <th key={hole.hole_number} className="px-2 py-2 text-center border-r border-white/30">
+                  {hole.hole_number}
+                </th>
+              ))}
+              {title === 'Front 9' && (
+                <th className="px-2 py-2 text-center font-bold">Out</th>
+              )}
+              {title === 'Back 9' && (
+                <>
+                  <th className="px-2 py-2 text-center font-bold border-r border-white/30">In</th>
+                  {totalHoles === 18 && (
+                    <th className="px-2 py-2 text-center font-bold">Total</th>
+                  )}
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Yardage Row */}
+            <tr className="border-t border-brand-700">
+              <td className="px-2 py-2 font-medium text-brand-700 bg-brand-50 border-r border-brand-700">
+                Yardage
+              </td>
+              {holes.map((hole, index) => (
+                <td key={hole.hole_number} className="p-0 border-r border-brand-700">
+                  <input
+                    type="number"
+                    value={hole.distance || ''}
+                    onChange={(e) =>
+                      onUpdate(startIndex + index, 'distance', parseInt(e.target.value) || 0)
+                    }
+                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors"
+                    placeholder="0"
+                  />
+                </td>
+              ))}
+              {showTotal && (
+                <td className="px-2 py-2 text-center font-semibold text-brand-700 bg-brand-50">
+                  {calculateTotal(holes, 'distance')}
+                </td>
+              )}
+              {title === 'Back 9' && totalHoles === 18 && (
+                <td className="px-2 py-2 text-center font-semibold text-brand-700 bg-brand-50 border-l border-brand-700">
+                  {calculateTotal([...front9, ...back9], 'distance')}
+                </td>
+              )}
+            </tr>
+            {/* Par Row */}
+            <tr className="border-t border-brand-700">
+              <td className="px-2 py-2 font-medium text-brand-700 bg-brand-50 border-r border-brand-700">
+                Par
+              </td>
+              {holes.map((hole, index) => (
+                <td key={hole.hole_number} className="p-0 border-r border-brand-700">
+                  <input
+                    type="number"
+                    value={hole.par}
+                    onChange={(e) =>
+                      onUpdate(startIndex + index, 'par', parseInt(e.target.value) || 4)
+                    }
+                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors"
+                    min={3}
+                    max={5}
+                  />
+                </td>
+              ))}
+              {showTotal && (
+                <td className="px-2 py-2 text-center font-semibold text-brand-700 bg-brand-50">
+                  {calculateTotal(holes, 'par')}
+                </td>
+              )}
+              {title === 'Back 9' && totalHoles === 18 && (
+                <td className="px-2 py-2 text-center font-semibold text-brand-700 bg-brand-50 border-l border-brand-700">
+                  {calculateTotal([...front9, ...back9], 'par')}
+                </td>
+              )}
+            </tr>
+            {/* HCP Row */}
+            <tr className="border-t border-brand-700">
+              <td className="px-2 py-2 font-medium text-brand-700 bg-brand-50 border-r border-brand-700">
+                HCP
+              </td>
+              {holes.map((hole, index) => (
+                <td key={hole.hole_number} className="p-0 border-r border-brand-700">
+                  <input
+                    type="number"
+                    value={hole.handicap}
+                    onChange={(e) =>
+                      onUpdate(startIndex + index, 'handicap', parseInt(e.target.value) || 1)
+                    }
+                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors"
+                    min={1}
+                    max={18}
+                  />
+                </td>
+              ))}
+              {showTotal && (
+                <td className="px-2 py-2 text-center bg-brand-50"></td>
+              )}
+              {title === 'Back 9' && totalHoles === 18 && (
+                <td className="px-2 py-2 text-center bg-brand-50 border-l border-brand-700"></td>
+              )}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      {renderNine(front9, 0, 'Front 9', true)}
+      {totalHoles === 18 && renderNine(back9, 9, 'Back 9', true)}
+    </div>
+  )
+}
