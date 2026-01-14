@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const supabase = await createClient()
         const body = await request.json()
         const { holes } = body
@@ -15,7 +16,7 @@ export async function POST(
             .from('course_holes')
             .insert(
                 holes.map((hole: any) => ({
-                    course_id: params.id,
+                    course_id: id,
                     hole_number: hole.hole_number,
                     par: hole.par,
                     distance: hole.distance,

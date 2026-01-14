@@ -12,7 +12,10 @@ import { AnimatedInput } from '@/components/ui/animated-input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Toggle } from '@/components/ui/toggle'
-import { Loader2, Upload } from 'lucide-react'
+import { Loader2, Upload, Check, ChevronsUpDown } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { cn } from '@/lib/utils'
 
 type AddMode = 'quick' | 'upload' | 'manual'
 
@@ -40,6 +43,8 @@ export function AddCourseDialog({
   const [city, setCity] = useState('')
   const [country, setCountry] = useState('')
   const [totalHoles, setTotalHoles] = useState<9 | 18>(18)
+  const [teeColor, setTeeColor] = useState('Yellow')
+  const [teeColorOpen, setTeeColorOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [processingOCR, setProcessingOCR] = useState(false)
   const [ocrCompleted, setOcrCompleted] = useState(false)
@@ -52,6 +57,8 @@ export function AddCourseDialog({
     }))
   )
 
+  const commonTeeColors = ['Black', 'White', 'Yellow', 'Blue', 'Red']
+
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return
 
@@ -59,6 +66,7 @@ export function AddCourseDialog({
     try {
       const formData = new FormData()
       formData.append('file', files[0])
+      formData.append('teeColor', teeColor)
 
       const response = await fetch('/api/ocr/course', {
         method: 'POST',
@@ -89,6 +97,7 @@ export function AddCourseDialog({
           city: city || null,
           country: country || null,
           total_holes: totalHoles,
+          tee_color: mode === 'upload' ? teeColor : null,
         }),
       })
 
@@ -193,23 +202,84 @@ export function AddCourseDialog({
             </div>
 
             {mode !== 'quick' && (
-              <div>
-                <Label>Number of Holes</Label>
-                <div className="flex gap-2 mt-2">
-                  <Toggle
-                    pressed={totalHoles === 9}
-                    onPressedChange={() => setTotalHoles(9)}
-                    className="data-[state=on]:bg-brand-700 data-[state=on]:text-white"
-                  >
-                    9 Holes
-                  </Toggle>
-                  <Toggle
-                    pressed={totalHoles === 18}
-                    onPressedChange={() => setTotalHoles(18)}
-                    className="data-[state=on]:bg-brand-700 data-[state=on]:text-white"
-                  >
-                    18 Holes
-                  </Toggle>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tee Color</Label>
+                  <Popover open={teeColorOpen} onOpenChange={setTeeColorOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={teeColorOpen}
+                        className="w-full justify-between font-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-700 focus-visible:border-brand-700"
+                      >
+                        {teeColor || "Select tee color..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command shouldFilter={false} className="[&_[cmdk-input-wrapper]]:border-0 [&_[cmdk-input-wrapper]]:focus-within:ring-0 [&_[cmdk-input]]:focus:ring-0 [&_[cmdk-input]]:focus-visible:ring-0">
+                        <CommandInput 
+                          placeholder="Type or select..." 
+                          className="focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none !ring-0 !outline-none [&>input]:focus:ring-0 [&>input]:focus-visible:ring-0"
+                          value={teeColor}
+                          onValueChange={setTeeColor}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              setTeeColorOpen(false)
+                            }
+                          }}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            <div className="py-2 text-center text-sm">
+                              Type custom color and press Enter
+                            </div>
+                          </CommandEmpty>
+                          <CommandGroup heading="Common Tee Colors">
+                            {commonTeeColors.map((color) => (
+                              <CommandItem
+                                key={color}
+                                value={color}
+                                onSelect={(currentValue) => {
+                                  setTeeColor(currentValue)
+                                  setTeeColorOpen(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    teeColor === color ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {color}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label>Number of Holes</Label>
+                  <div className="flex gap-2">
+                    <Toggle
+                      pressed={totalHoles === 9}
+                      onPressedChange={() => setTotalHoles(9)}
+                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                    >
+                      9 Holes
+                    </Toggle>
+                    <Toggle
+                      pressed={totalHoles === 18}
+                      onPressedChange={() => setTotalHoles(18)}
+                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                    >
+                      18 Holes
+                    </Toggle>
+                  </div>
                 </div>
               </div>
             )}
@@ -218,6 +288,7 @@ export function AddCourseDialog({
           {/* Upload Scorecard */}
           {mode === 'upload' && (
             <div className="space-y-4">
+
               <Label>Upload Scorecard</Label>
               <div className="relative">
                 <input
@@ -323,10 +394,10 @@ function ScorecardGrid({ holeData, totalHoles, onUpdate }: ScorecardGridProps) {
             </tr>
           </thead>
           <tbody>
-            {/* Yardage Row */}
+            {/* Length Row */}
             <tr className="border-t border-brand-700">
               <td className="px-2 py-2 font-medium text-brand-700 bg-brand-50 border-r border-brand-700">
-                Yardage
+                Length
               </td>
               {holes.map((hole, index) => (
                 <td key={hole.hole_number} className="p-0 border-r border-brand-700">
