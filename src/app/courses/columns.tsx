@@ -36,7 +36,7 @@ export const columns: ColumnDef<Course>[] = [
   },
   {
     accessorKey: 'city',
-    header: 'Location',
+    header: () => <div className="text-center">Location</div>,
     size: 180,
     cell: ({ row }) => {
       const city = row.original.city
@@ -44,25 +44,25 @@ export const columns: ColumnDef<Course>[] = [
       const country = row.original.country
       
       const location = [city, state, country].filter(Boolean).join(', ')
-      return <div className="text-slate-600 truncate" title={location}>{location || '—'}</div>
+      return <div className="text-slate-600 text-center truncate" title={location}>{location || '—'}</div>
     },
   },
   {
     accessorKey: 'tee_color',
-    header: 'Tee Color',
+    header: () => <div className="text-center">Tee Color</div>,
     size: 100,
     cell: ({ row }) => {
       const teeColor = row.getValue('tee_color') as string | null
-      return <div className="text-slate-600">{teeColor || '—'}</div>
+      return <div className="text-slate-600 text-center">{teeColor || '—'}</div>
     },
   },
   {
     id: 'last_played',
-    header: 'Last Played',
+    header: () => <div className="text-center">Last Played</div>,
     size: 120,
     cell: () => {
       // Will show actual date when rounds are implemented
-      return <div className="text-slate-400">—</div>
+      return <div className="text-slate-400 text-center">—</div>
     },
   },
   {

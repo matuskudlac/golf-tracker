@@ -46,7 +46,7 @@ export const columns: ColumnDef<Round>[] = [
             return (
                 <Link 
                     href={`/courses/${courseId}`}
-                    className="text-blue-600 hover:text-blue-800 hover:underline truncate block"
+                    className="text-brand-700 hover:text-brand-800 hover:underline truncate block"
                     title={courseName}
                 >
                     {courseName}
