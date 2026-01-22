@@ -16,6 +16,7 @@ import { Loader2, Upload, Check, ChevronsUpDown } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
+import { useDropzone } from 'react-dropzone'
 
 type AddMode = 'quick' | 'upload' | 'manual'
 
@@ -90,6 +91,17 @@ export function AddCourseDialog({
       fetchHoles()
     }
   }, [editMode, courseData])
+
+  // Dropzone configuration
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg'] },
+    maxSize: 10485760, // 10MB
+    multiple: false,
+    onDrop: (acceptedFiles) => {
+      handleFileUpload(acceptedFiles)
+    }
+  })
+
 
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return
@@ -355,29 +367,25 @@ export function AddCourseDialog({
           {mode === 'upload' && (
             <div className="space-y-4">
 
-              <Label>Upload Scorecard</Label>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const files = e.target.files
-                    if (files && files.length > 0) {
-                      handleFileUpload([files[0]])
-                    }
-                  }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className="border-2 border-dashed border-brand-700 rounded-lg p-8 text-center hover:bg-brand-50 transition-colors cursor-pointer">
+              {!ocrCompleted && <Label>Upload Scorecard</Label>}
+              {!ocrCompleted && (
+                <div 
+                  {...getRootProps()} 
+                  className={cn(
+                    "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
+                    isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
+                  )}
+                >
+                  <input {...getInputProps()} />
                   <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
                   <p className="text-sm font-medium text-brand-700">
-                    Click to upload or drag and drop
+                    {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
                     PNG, JPG or JPEG (MAX. 10MB)
                   </p>
                 </div>
-              </div>
+              )}
               {processingOCR && (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-brand-700" />

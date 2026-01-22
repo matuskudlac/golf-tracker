@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { AddRoundDialog } from './AddRoundDialog'
+import { AddRoundDialog } from '../../components/rounds/AddRoundDialog'
 
 export default function RoundsPage() {
   const router = useRouter()

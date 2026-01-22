@@ -20,6 +20,8 @@ import { DatePickerInput } from '@/components/ui/input-date-picker'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
+import { useDropzone } from 'react-dropzone'
+import { Upload } from 'lucide-react'
 
 type AddMode = 'manual' | 'upload'
 
@@ -53,6 +55,11 @@ export function AddRoundDialog({
   const [courseHoles, setCourseHoles] = useState<any[]>([])
   const [holeScores, setHoleScores] = useState<number[]>(Array(18).fill(0))
   const [loadingCourseHoles, setLoadingCourseHoles] = useState(false)
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [ocrCompleted, setOcrCompleted] = useState(false)
+  const [showValidationError, setShowValidationError] = useState(false)
 
   // Fetch course holes when course is selected
   useEffect(() => {
@@ -108,6 +115,63 @@ export function AddRoundDialog({
       }
     } catch (error) {
       console.error('Failed to fetch courses:', error)
+    }
+  }
+
+  // Dropzone configuration
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg'] },
+    maxSize: 10485760, // 10MB
+    multiple: false,
+    onDrop: (acceptedFiles) => {
+      // Validate required fields before processing
+      if (!selectedCourse || !date) {
+        setShowValidationError(true)
+        return
+      }
+      setShowValidationError(false)
+      handleFileUpload(acceptedFiles)
+    }
+  })
+
+  const handleFileUpload = async (files: File[]) => {
+    if (files.length === 0) return
+
+    const file = files[0]
+    setUploadedImage(file)
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Process with AI
+    setIsProcessing(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('courseId', selectedCourse?.id || '')
+      formData.append('totalHoles', totalHoles.toString())
+
+      const response = await fetch('/api/ocr/round', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Auto-fill the scores from OCR result
+        if (data.scores && Array.isArray(data.scores)) {
+          setHoleScores(data.scores)
+          setOcrCompleted(true)
+        }
+      }
+    } catch (error) {
+      console.error('OCR failed:', error)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -203,9 +267,12 @@ export function AddRoundDialog({
     setNotes('');
     setCourseHoles([]);
     setHoleScores(Array(18).fill(0));
+    setUploadedImage(null);
+    setImagePreview(null);
+    setOcrCompleted(false);
   };
 
-  const dialogSize = mode === 'manual' ? 'sm:max-w-4xl' : 'sm:max-w-2xl'
+  const dialogSize = 'sm:max-w-4xl'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -358,11 +425,189 @@ export function AddRoundDialog({
             </>
           )}
 
-          {/* Upload Mode - Coming Later */}
+          {/* Upload Mode */}
           {mode === 'upload' && (
-            <div className="text-center py-8 text-slate-500">
-              Upload scorecard form coming later...
+            <>
+            <div className="space-y-6">
+              {/* Course Selection */}
+              <div className="space-y-2">
+                <Label>Course *</Label>
+                <div className="flex gap-2">
+                  <Popover open={courseOpen} onOpenChange={setCourseOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={courseOpen}
+                        className={cn(
+                          "flex-1 justify-between font-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-700 focus-visible:border-brand-700",
+                          showValidationError && !selectedCourse && "border-red-500 ring-1 ring-red-500"
+                        )}
+                      >
+                        {selectedCourse ? selectedCourse.name : "Select course..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search courses..." />
+                        <CommandList>
+                          <CommandEmpty>No course found.</CommandEmpty>
+                          <CommandGroup>
+                            {courses.map((course) => (
+                              <CommandItem
+                                key={course.id}
+                                value={course.name}
+                                onSelect={() => {
+                                  setSelectedCourse(course)
+                                  setCourseOpen(false)
+                                  setShowValidationError(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedCourse?.id === course.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {course.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    variant="outline"
+                    onClick={handleAddCourse}
+                    className="shrink-0"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Add Course
+                  </Button>
+                </div>
+                {showValidationError && !selectedCourse && (
+                  <p className="text-xs text-red-500">Please select a course before uploading</p>
+                )}
+              </div>
+
+              {/* Date and Holes */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <DatePickerInput
+                    date={date}
+                    onDateChange={(newDate) => {
+                      setDate(newDate)
+                      setShowValidationError(false)
+                    }}
+                    label="Date Played *"
+                    placeholder="dd/mm/yyyy"
+                  />
+                  {showValidationError && !date && (
+                    <p className="text-xs text-red-500">Please select a date before uploading</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Number of Holes *</Label>
+                  <div className="flex gap-2">
+                    <Toggle
+                      pressed={totalHoles === 9}
+                      onPressedChange={() => setTotalHoles(9)}
+                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                    >
+                      9 Holes
+                    </Toggle>
+                    <Toggle
+                      pressed={totalHoles === 18}
+                      onPressedChange={() => setTotalHoles(18)}
+                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                    >
+                      18 Holes
+                    </Toggle>
+                  </div>
+                </div>
+              </div>
+
+              {/* Weather (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="weather">Weather</Label>
+                <AnimatedInput
+                  id="weather"
+                  value={weather}
+                  onChange={(e) => setWeather(e.target.value)}
+                  placeholder="e.g., Sunny, 75°F"
+                />
+              </div>
+
+              {/* Notes (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any additional notes about your round..."
+                  rows={3}
+                  className="focus-visible:ring-1 focus-visible:ring-brand-700 focus-visible:border-brand-700"
+                />
+              </div>
+
+              {/* Scorecard Image Upload */}
+              <div className="space-y-2">
+                {!ocrCompleted && <Label>Scorecard Image *</Label>}
+                {!ocrCompleted ? (
+                  !isProcessing ? (
+                    <div 
+                      {...getRootProps()} 
+                      className={cn(
+                        "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
+                        isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
+                      )}
+                    >
+                      <input {...getInputProps()} />
+                      <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
+                      <p className="text-sm font-medium text-brand-700">
+                        {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        PNG, JPG or JPEG (MAX. 10MB)
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 border-2 border-brand-700 rounded-lg bg-brand-50">
+                      <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
+                      <span className="ml-2 text-sm text-slate-600">
+                        Extracting scores from scorecard...
+                      </span>
+                    </div>
+                  )
+                ) : null}
+              </div>
+
+              {/* Scorecard Grid - Show after OCR completes */}
+              {selectedCourse && ocrCompleted && (
+                <>
+                  {loadingCourseHoles ? (
+                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                      <div className="relative">
+                        <div className="h-12 w-12 rounded-full border-4 border-brand-100"></div>
+                        <div className="absolute top-0 h-12 w-12 rounded-full border-4 border-brand-700 border-t-transparent animate-spin"></div>
+                      </div>
+                      <p className="text-sm text-slate-600">Loading course data...</p>
+                    </div>
+                  ) : courseHoles.length > 0 ? (
+                    <ScorecardGrid
+                      courseHoles={courseHoles}
+                      holeScores={holeScores}
+                      totalHoles={totalHoles}
+                      onUpdateScore={updateHoleScore}
+                    />
+                  ) : null}
+                </>
+              )}
             </div>
+            </>
           )}
 
           {/* Actions */}
