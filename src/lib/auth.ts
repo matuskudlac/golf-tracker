@@ -1,4 +1,6 @@
-import { supabase } from './supabase'
+import { createClient } from './supabase/client'
+
+const supabase = createClient()
 
 // Sign up with email and password
 export async function signUp(email: string, password: string, firstName: string, lastName: string) {

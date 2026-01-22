@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Find My User ID</title>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = prompt('Enter your NEXT_PUBLIC_SUPABASE_URL:')
+        const supabaseKey = prompt('Enter your NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:')
+        
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+            document.getElementById('result').innerHTML = `
+                <h2>Your User ID:</h2>
+                <code style="background: #f0f0f0; padding: 10px; display: block; margin: 10px 0;">
+                    ${user.id}
+                </code>
+                <p>Copy this ID and use it in the SQL migration!</p>
+            `
+        } else {
+            document.getElementById('result').innerHTML = '<p style="color: red;">Not logged in. Please log in to your app first.</p>'
+        }
+    </script>
+</head>
+<body>
+    <h1>Finding User ID...</h1>
+    <div id="result"></div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,8 @@ interface AddCourseDialogProps {
   onOpenChange: (open: boolean) => void
   mode: AddMode
   onSuccess: () => void
+  editMode?: boolean
+  courseData?: any
 }
 
 interface HoleData {
@@ -38,6 +40,8 @@ export function AddCourseDialog({
   onOpenChange,
   mode,
   onSuccess,
+  editMode = false,
+  courseData,
 }: AddCourseDialogProps) {
   const [courseName, setCourseName] = useState('')
   const [city, setCity] = useState('')
@@ -58,6 +62,34 @@ export function AddCourseDialog({
   )
 
   const commonTeeColors = ['Black', 'White', 'Yellow', 'Blue', 'Red']
+
+  // Pre-populate form when in edit mode
+  useEffect(() => {
+    if (editMode && courseData) {
+      setCourseName(courseData.name || '')
+      setCity(courseData.city || '')
+      setCountry(courseData.country || '')
+      setTotalHoles(courseData.total_holes || 18)
+      setTeeColor(courseData.tee_color || 'Yellow')
+      
+      // Fetch existing hole data
+      const fetchHoles = async () => {
+        try {
+          const response = await fetch(`/api/courses/${courseData.id}/holes`)
+          if (response.ok) {
+            const holes = await response.json()
+            if (holes && holes.length > 0) {
+              setHoleData(holes)
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch hole data:', error)
+        }
+      }
+      
+      fetchHoles()
+    }
+  }, [editMode, courseData])
 
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return
@@ -88,39 +120,65 @@ export function AddCourseDialog({
   const handleSubmit = async () => {
     setLoading(true)
     try {
-      // Create course
-      const courseResponse = await fetch('/api/courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: courseName,
-          city: city || null,
-          country: country || null,
-          total_holes: totalHoles,
-          tee_color: mode === 'upload' ? teeColor : null,
-        }),
-      })
+      if (editMode && courseData) {
+        // Update existing course
+        const courseResponse = await fetch(`/api/courses/${courseData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: courseName,
+            city: city || null,
+            country: country || null,
+            total_holes: totalHoles,
+            tee_color: teeColor,
+          }),
+        })
 
-      if (!courseResponse.ok) throw new Error('Failed to create course')
+        if (!courseResponse.ok) throw new Error('Failed to update course')
 
-      const course = await courseResponse.json()
-
-      // If mode is not quick, create hole data
-      if (mode !== 'quick') {
-        const holesToCreate = holeData.slice(0, totalHoles)
+        // Update hole data
+        const holesToUpdate = holeData.slice(0, totalHoles)
         
-        await fetch('/api/courses/' + course.id + '/holes', {
+        await fetch(`/api/courses/${courseData.id}/holes`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ holes: holesToUpdate }),
+        })
+      } else {
+        // Create new course
+        const courseResponse = await fetch('/api/courses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ holes: holesToCreate }),
+          body: JSON.stringify({
+            name: courseName,
+            city: city || null,
+            country: country || null,
+            total_holes: totalHoles,
+            tee_color: mode === 'upload' ? teeColor : null,
+          }),
         })
+
+        if (!courseResponse.ok) throw new Error('Failed to create course')
+
+        const course = await courseResponse.json()
+
+        // If mode is not quick, create hole data
+        if (mode !== 'quick') {
+          const holesToCreate = holeData.slice(0, totalHoles)
+          
+          await fetch('/api/courses/' + course.id + '/holes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ holes: holesToCreate }),
+          })
+        }
       }
 
       onSuccess()
       onOpenChange(false)
       resetForm()
     } catch (error) {
-      console.error('Failed to create course:', error)
+      console.error('Failed to save course:', error)
     } finally {
       setLoading(false)
     }
@@ -152,17 +210,25 @@ export function AddCourseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${dialogSize} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent className={`${dialogSize} max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'quick' && 'Quick Add Course'}
-            {mode === 'upload' && 'Add Course with Scorecard'}
-            {mode === 'manual' && 'Add Course Manually'}
+            {editMode ? 'Edit Course' : (
+              <>
+                {mode === 'quick' && 'Quick Add Course'}
+                {mode === 'upload' && 'Add Course with Scorecard'}
+                {mode === 'manual' && 'Add Course Manually'}
+              </>
+            )}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'quick' && 'Add basic course information'}
-            {mode === 'upload' && 'Upload a scorecard to auto-fill hole data'}
-            {mode === 'manual' && 'Enter course and hole information manually'}
+            {editMode ? 'Update course and hole information' : (
+              <>
+                {mode === 'quick' && 'Add basic course information'}
+                {mode === 'upload' && 'Upload a scorecard to auto-fill hole data'}
+                {mode === 'manual' && 'Enter course and hole information manually'}
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -343,7 +409,7 @@ export function AddCourseDialog({
               className="bg-brand-700 hover:bg-brand-800 text-white"
             >
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Add Course
+              {editMode ? 'Save Changes' : 'Add Course'}
             </Button>
           </div>
         </div>
@@ -407,7 +473,7 @@ function ScorecardGrid({ holeData, totalHoles, onUpdate }: ScorecardGridProps) {
                     onChange={(e) =>
                       onUpdate(startIndex + index, 'distance', parseInt(e.target.value) || 0)
                     }
-                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors"
+                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0"
                   />
                 </td>
@@ -436,7 +502,7 @@ function ScorecardGrid({ holeData, totalHoles, onUpdate }: ScorecardGridProps) {
                     onChange={(e) =>
                       onUpdate(startIndex + index, 'par', parseInt(e.target.value) || 4)
                     }
-                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors"
+                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     min={3}
                     max={5}
                   />
@@ -466,7 +532,7 @@ function ScorecardGrid({ holeData, totalHoles, onUpdate }: ScorecardGridProps) {
                     onChange={(e) =>
                       onUpdate(startIndex + index, 'handicap', parseInt(e.target.value) || 1)
                     }
-                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors"
+                    className="w-full h-full px-2 py-2 text-center border-0 focus:outline-none focus:ring-0 focus:bg-brand-50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     min={1}
                     max={18}
                   />

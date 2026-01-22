@@ -37,6 +37,7 @@ export default function CoursesPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [addMode, setAddMode] = useState<AddMode>('quick')
+  const [editCourse, setEditCourse] = useState<any>(null)
 
   useEffect(() => {
     checkUser()
@@ -156,6 +157,7 @@ export default function CoursesPage() {
             <DropdownMenuContent align="end" className="w-[180px]">
               <DropdownMenuItem
                 onClick={() => {
+                  setEditCourse(null)
                   setAddMode('quick')
                   setDialogOpen(true)
                 }}
@@ -164,6 +166,7 @@ export default function CoursesPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
+                  setEditCourse(null)
                   setAddMode('upload')
                   setDialogOpen(true)
                 }}
@@ -172,6 +175,7 @@ export default function CoursesPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
+                  setEditCourse(null)
                   setAddMode('manual')
                   setDialogOpen(true)
                 }}
@@ -182,13 +186,26 @@ export default function CoursesPage() {
           </DropdownMenu>
         </div>
 
-        <CoursesDataTable columns={columns} data={courses} />
+        <CoursesDataTable 
+          columns={columns} 
+          data={courses} 
+          onEdit={(course) => {
+            setEditCourse(course)
+            setAddMode('manual')
+            setDialogOpen(true)
+          }}
+        />
 
         <AddCourseDialog
           open={dialogOpen}
-          onOpenChange={setDialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open)
+            if (!open) setEditCourse(null)
+          }}
           mode={addMode}
           onSuccess={fetchCourses}
+          editMode={!!editCourse}
+          courseData={editCourse}
         />
       </main>
     </div>
