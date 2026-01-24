@@ -19,7 +19,7 @@ export async function analyzeImage(
     }
 
     console.log('✅ GEMINI_API_KEY found (length:', apiKey.length, ')')
-    console.log('🤖 Analyzing image with Gemini 2.5 Pro...')
+    console.log('🤖 Analyzing image with Gemini 3 Flash...')
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
