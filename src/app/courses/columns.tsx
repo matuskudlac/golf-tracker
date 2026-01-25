@@ -3,6 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { MoreHorizontal, Pencil, Trash2, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,76 @@ export type Course = {
   total_holes: number
   tee_color: string | null
   created_at: string
+}
+
+
+// Separate component to allow using hooks like useRouter
+const CourseActions = ({ course, table }: { course: Course; table: any }) => {
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete "${course.name}"?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/courses/${course.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        router.refresh()
+        const meta = table.options.meta as any
+        if (meta?.onDelete) {
+          meta.onDelete()
+        }
+      } else {
+        alert('Failed to delete course')
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error)
+      alert('Failed to delete course')
+    }
+  }
+
+  const handleEdit = () => {
+    const meta = table.options.meta as any
+    if (meta?.onEdit) {
+      meta.onEdit(course)
+    }
+  }
+
+  return (
+    <div className="text-right">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(course.id)}>
+            <Copy className="h-4 w-4 mr-2" />
+            Copy course ID
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleEdit}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit course
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={handleDelete}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete course
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
 }
 
 export const columns: ColumnDef<Course>[] = [
@@ -77,68 +148,7 @@ export const columns: ColumnDef<Course>[] = [
     id: 'actions',
     size: 60,
     cell: ({ row, table }) => {
-      const course = row.original
-
-      const handleDelete = async () => {
-        if (!confirm(`Are you sure you want to delete "${course.name}"?`)) {
-          return
-        }
-
-        try {
-          const response = await fetch(`/api/courses/${course.id}`, {
-            method: 'DELETE',
-          })
-
-          if (response.ok) {
-            window.location.reload()
-          } else {
-            alert('Failed to delete course')
-          }
-        } catch (error) {
-          console.error('Error deleting course:', error)
-          alert('Failed to delete course')
-        }
-      }
-
-      const handleEdit = () => {
-        const meta = table.options.meta as any
-        if (meta?.onEdit) {
-          meta.onEdit(course)
-        }
-      }
-
-
-      return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(course.id)}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy course ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleEdit}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit course
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleDelete}
-              className="text-red-600 focus:text-red-600"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete course
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        </div>
-      )
+      return <CourseActions course={row.original} table={table} />
     },
   },
 ]

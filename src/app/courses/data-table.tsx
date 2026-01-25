@@ -36,12 +36,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   onEdit?: (course: TData) => void
+  onDelete?: () => void
 }
 
 export function CoursesDataTable<TData, TValue>({
   columns,
   data,
   onEdit,
+  onDelete,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -57,6 +59,7 @@ export function CoursesDataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     meta: {
       onEdit,
+      onDelete,
     },
     state: {
       sorting,

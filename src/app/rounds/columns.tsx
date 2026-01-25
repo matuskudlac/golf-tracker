@@ -10,6 +10,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export type Round = {
     id: string
@@ -20,6 +21,53 @@ export type Round = {
     total_par: number
     to_par: number
     holes_played: number
+}
+
+const RoundActions = ({ round }: { round: Round }) => {
+    const router = useRouter()
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this round?')) {
+            return
+        }
+
+        try {
+            const response = await fetch(`/api/rounds/${round.id}`, {
+                method: 'DELETE',
+            })
+
+            if (response.ok) {
+                router.refresh()
+            } else {
+                alert('Failed to delete round')
+            }
+        } catch (error) {
+            console.error('Error deleting round:', error)
+            alert('Failed to delete round')
+        }
+    }
+
+    return (
+        <div className="text-right">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                        onClick={handleDelete}
+                        className="text-red-600 focus:text-red-600"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    )
 }
 
 export const columns: ColumnDef<Round>[] = [
@@ -85,37 +133,7 @@ export const columns: ColumnDef<Round>[] = [
         id: "actions",
         size: 60,
         cell: ({ row }) => {
-            const round = row.original
-
-            return (
-                <div className="text-right">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    if (confirm('Are you sure you want to delete this round?')) {
-                                        fetch(`/api/rounds/${round.id}`, {
-                                            method: 'DELETE',
-                                        }).then(() => {
-                                            window.location.reload()
-                                        })
-                                    }
-                                }}
-                                className="text-red-600"
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )
+            return <RoundActions round={row.original} />
         },
     },
 ]
