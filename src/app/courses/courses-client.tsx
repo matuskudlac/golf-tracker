@@ -3,14 +3,8 @@
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { signOut } from '@/lib/auth'
-import { Plus, ChevronDown } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   Navbar,
   NavBody,
@@ -26,8 +20,6 @@ import { CoursesDataTable } from './data-table'
 import { columns } from './columns'
 import { AddCourseDialog } from '@/components/courses/AddCourseDialog'
 
-type AddMode = 'quick' | 'upload' | 'manual'
-
 interface CoursesClientProps {
   initialUser: any
   initialCourses: any[]
@@ -38,7 +30,6 @@ export function CoursesClient({ initialUser, initialCourses }: CoursesClientProp
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [addMode, setAddMode] = useState<AddMode>('quick')
   const [editCourse, setEditCourse] = useState<any>(null)
 
   const handleSignOut = async () => {
@@ -109,44 +100,16 @@ export function CoursesClient({ initialUser, initialCourses }: CoursesClientProp
             <h1 className="text-3xl font-bold text-slate-900">Courses</h1>
             <p className="text-slate-600 mt-1">Manage your golf courses</p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-brand-700 hover:bg-brand-800 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Course
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditCourse(null)
-                  setAddMode('quick')
-                  setDialogOpen(true)
-                }}
-              >
-                Quick Add
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditCourse(null)
-                  setAddMode('upload')
-                  setDialogOpen(true)
-                }}
-              >
-                Upload Scorecard
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditCourse(null)
-                  setAddMode('manual')
-                  setDialogOpen(true)
-                }}
-              >
-                Manual Entry
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button 
+            className="bg-brand-700 hover:bg-brand-800 text-white"
+            onClick={() => {
+              setEditCourse(null)
+              setDialogOpen(true)
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Course
+          </Button>
         </div>
 
         <CoursesDataTable 
@@ -154,7 +117,6 @@ export function CoursesClient({ initialUser, initialCourses }: CoursesClientProp
           data={initialCourses} 
           onEdit={(course) => {
             setEditCourse(course)
-            setAddMode('manual')
             setDialogOpen(true)
           }}
           onDelete={handleRefresh}
@@ -166,7 +128,6 @@ export function CoursesClient({ initialUser, initialCourses }: CoursesClientProp
             setDialogOpen(open)
             if (!open) setEditCourse(null)
           }}
-          mode={addMode}
           onSuccess={handleRefresh}
           editMode={!!editCourse}
           courseData={editCourse}

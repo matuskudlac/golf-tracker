@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { signOut } from '@/lib/auth'
-import { Plus, ChevronDown } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Navbar,
@@ -18,12 +18,6 @@ import {
 import { UserMenu } from '@/components/navigation/UserMenu'
 import { DataTable } from './data-table'
 import { columns } from './columns'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { AddRoundDialog } from '../../components/rounds/AddRoundDialog'
 
 interface RoundsClientProps {
@@ -36,7 +30,6 @@ export function RoundsClient({ initialUser, initialRounds }: RoundsClientProps) 
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [addMode, setAddMode] = useState<'manual' | 'upload'>('manual')
 
   const handleSignOut = async () => {
     await signOut()
@@ -106,33 +99,13 @@ export function RoundsClient({ initialUser, initialRounds }: RoundsClientProps) 
             <h1 className="text-3xl font-bold text-slate-900">Rounds</h1>
             <p className="text-slate-600 mt-1">Track and manage your golf rounds</p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-brand-700 hover:bg-brand-800 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Round
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem
-                onClick={() => {
-                  setAddMode('manual')
-                  setDialogOpen(true)
-                }}
-              >
-                Manual Entry
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setAddMode('upload')
-                  setDialogOpen(true)
-                }}
-              >
-                Upload Scorecard
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button 
+            className="bg-brand-700 hover:bg-brand-800 text-white"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Round
+          </Button>
         </div>
 
         <DataTable columns={columns} data={initialRounds} />
@@ -140,7 +113,6 @@ export function RoundsClient({ initialUser, initialRounds }: RoundsClientProps) 
         <AddRoundDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          mode={addMode}
           onSuccess={handleRefresh}
         />
       </main>

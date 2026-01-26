@@ -74,8 +74,12 @@ IMPORTANT:
             parsedData = JSON.parse(cleanedResponse)
         } catch (parseError) {
             console.error('Failed to parse Gemini response:', response)
+            console.error('Parse error:', parseError)
             return NextResponse.json(
-                { error: 'Failed to parse scorecard data', details: response },
+                {
+                    error: 'Failed to parse scorecard data',
+                    details: 'Gemini returned invalid JSON. Check server logs for the raw response.'
+                },
                 { status: 500 }
             )
         }

@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label'
 import { AnimatedInput } from '@/components/ui/animated-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Toggle } from '@/components/ui/toggle'
-import { Loader2, ChevronsUpDown, Check, ExternalLink } from 'lucide-react'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Loader2, ChevronsUpDown, Check, ExternalLink, Edit3 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { DatePickerInput } from '@/components/ui/input-date-picker'
@@ -28,7 +29,6 @@ type AddMode = 'manual' | 'upload'
 interface AddRoundDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: AddMode
   onSuccess: () => void
 }
 
@@ -40,10 +40,10 @@ interface Course {
 export function AddRoundDialog({
   open,
   onOpenChange,
-  mode,
   onSuccess,
 }: AddRoundDialogProps) {
   const router = useRouter()
+  const [mode, setMode] = useState<AddMode>('manual')
   const [loading, setLoading] = useState(false)
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -278,15 +278,35 @@ export function AddRoundDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`${dialogSize} max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'manual' && 'Add Round - Manual Entry'}
-            {mode === 'upload' && 'Add Round - Upload Scorecard'}
-          </DialogTitle>
+          <DialogTitle>Add Round</DialogTitle>
           <DialogDescription>
-            {mode === 'manual' && 'Enter your round details and hole-by-hole scores'}
-            {mode === 'upload' && 'Upload a scorecard to auto-fill your round data'}
+            Choose how you'd like to add your round
           </DialogDescription>
         </DialogHeader>
+
+        {/* Mode Selector */}
+        <ToggleGroup 
+          type="single" 
+          value={mode} 
+          onValueChange={(value) => value && setMode(value as AddMode)}
+          className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg max-w-2xl mx-auto"
+        >
+          <ToggleGroupItem 
+            value="manual"
+            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+          >
+            <Edit3 className="h-4 w-4 mr-2" />
+            Manual Entry
+          </ToggleGroupItem>
+          
+          <ToggleGroupItem 
+            value="upload"
+            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Scorecard
+          </ToggleGroupItem>
+        </ToggleGroup>
 
         <div className="space-y-6">
           {/* Manual Entry Form */}

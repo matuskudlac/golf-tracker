@@ -11,19 +11,19 @@ import {
 import { AnimatedInput } from '@/components/ui/animated-input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Toggle } from '@/components/ui/toggle'
 import { Loader2, Upload, Check, ChevronsUpDown } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { useDropzone } from 'react-dropzone'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Zap, Edit3 } from 'lucide-react'
 
 type AddMode = 'quick' | 'upload' | 'manual'
 
 interface AddCourseDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: AddMode
   onSuccess: () => void
   editMode?: boolean
   courseData?: any
@@ -39,11 +39,11 @@ interface HoleData {
 export function AddCourseDialog({
   open,
   onOpenChange,
-  mode,
   onSuccess,
   editMode = false,
   courseData,
 }: AddCourseDialogProps) {
+  const [mode, setMode] = useState<AddMode>('quick')
   const [courseName, setCourseName] = useState('')
   const [city, setCity] = useState('')
   const [country, setCountry] = useState('')
@@ -218,31 +218,49 @@ export function AddCourseDialog({
     setHoleData(newHoleData)
   }
 
-  const dialogSize = mode === 'quick' ? 'sm:max-w-md' : 'sm:max-w-4xl'
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${dialogSize} max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <DialogHeader>
           <DialogTitle>
-            {editMode ? 'Edit Course' : (
-              <>
-                {mode === 'quick' && 'Quick Add Course'}
-                {mode === 'upload' && 'Add Course with Scorecard'}
-                {mode === 'manual' && 'Add Course Manually'}
-              </>
-            )}
+            {editMode ? 'Edit Course' : 'Add Course'}
           </DialogTitle>
           <DialogDescription>
-            {editMode ? 'Update course and hole information' : (
-              <>
-                {mode === 'quick' && 'Add basic course information'}
-                {mode === 'upload' && 'Upload a scorecard to auto-fill hole data'}
-                {mode === 'manual' && 'Enter course and hole information manually'}
-              </>
-            )}
+            {editMode ? 'Update course and hole information' : 'Choose how you\'d like to add your course'}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Mode Selector */}
+        <ToggleGroup 
+          type="single" 
+          value={mode} 
+          onValueChange={(value) => value && setMode(value as AddMode)}
+          className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-lg max-w-2xl mx-auto"
+        >
+          <ToggleGroupItem 
+            value="quick" 
+            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Quick Add
+          </ToggleGroupItem>
+          
+          <ToggleGroupItem 
+            value="upload"
+            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Scorecard
+          </ToggleGroupItem>
+          
+          <ToggleGroupItem 
+            value="manual"
+            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+          >
+            <Edit3 className="h-4 w-4 mr-2" />
+            Manual Entry
+          </ToggleGroupItem>
+        </ToggleGroup>
 
         <div className="space-y-6">
           {/* Basic Course Info */}
@@ -342,22 +360,25 @@ export function AddCourseDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Number of Holes</Label>
-                  <div className="flex gap-2">
-                    <Toggle
-                      pressed={totalHoles === 9}
-                      onPressedChange={() => setTotalHoles(9)}
-                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                  <ToggleGroup 
+                    type="single" 
+                    value={totalHoles.toString()} 
+                    onValueChange={(value) => value && setTotalHoles(parseInt(value) as 9 | 18)}
+                    className="!w-full gap-2 p-1 bg-slate-100 rounded-lg"
+                  >
+                    <ToggleGroupItem 
+                      value="9"
+                      className="flex-1 data-[state=on]:bg-brand-700 data-[state=on]:text-white data-[state=on]:shadow-sm transition-all !rounded-md"
                     >
                       9 Holes
-                    </Toggle>
-                    <Toggle
-                      pressed={totalHoles === 18}
-                      onPressedChange={() => setTotalHoles(18)}
-                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="18"
+                      className="flex-1 data-[state=on]:bg-brand-700 data-[state=on]:text-white data-[state=on]:shadow-sm transition-all !rounded-md"
                     >
                       18 Holes
-                    </Toggle>
-                  </div>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
               </div>
             )}
@@ -368,32 +389,33 @@ export function AddCourseDialog({
             <div className="space-y-4">
 
               {!ocrCompleted && <Label>Upload Scorecard</Label>}
-              {!ocrCompleted && (
-                <div 
-                  {...getRootProps()} 
-                  className={cn(
-                    "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
-                    isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
-                  )}
-                >
-                  <input {...getInputProps()} />
-                  <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
-                  <p className="text-sm font-medium text-brand-700">
-                    {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    PNG, JPG or JPEG (MAX. 10MB)
-                  </p>
-                </div>
-              )}
-              {processingOCR && (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
-                  <span className="ml-2 text-sm text-slate-600">
-                    Processing scorecard...
-                  </span>
-                </div>
-              )}
+              {!ocrCompleted ? (
+                !processingOCR ? (
+                  <div 
+                    {...getRootProps()} 
+                    className={cn(
+                      "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
+                      isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
+                    )}
+                  >
+                    <input {...getInputProps()} />
+                    <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
+                    <p className="text-sm font-medium text-brand-700">
+                      {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      PNG, JPG or JPEG (MAX. 10MB)
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 border-2 border-brand-700 rounded-lg bg-brand-50">
+                    <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
+                    <span className="ml-2 text-sm text-slate-600">
+                      Processing scorecard...
+                    </span>
+                  </div>
+                )
+              ) : null}
             </div>
           )}
 
