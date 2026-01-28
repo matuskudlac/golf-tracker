@@ -76,11 +76,10 @@ export const columns: ColumnDef<Round>[] = [
         header: "Date",
         size: 120,
         cell: ({ row }) => {
-            // Format date as dd/mm/yyyy
-            const date = new Date(row.getValue("date_played"))
-            const day = String(date.getDate()).padStart(2, '0')
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const year = date.getFullYear()
+            // Parse date string directly to avoid timezone issues
+            // Database stores as YYYY-MM-DD, we want to display as DD/MM/YYYY
+            const dateStr = row.getValue("date_played") as string
+            const [year, month, day] = dateStr.split('T')[0].split('-')
             return <div>{`${day}/${month}/${year}`}</div>
         },
     },

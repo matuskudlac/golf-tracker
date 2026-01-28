@@ -53,16 +53,28 @@ export default function Loading() {
 
           {/* Right Column - Chart and Rounds Skeleton */}
           <div className="lg:col-span-2 space-y-6">
-             {/* Chart Skeleton */}
-            <div className="rounded-xl border bg-white p-6 h-[300px]">
+             {/* Chart Skeleton with Welcome Header */}
+            <div className="rounded-xl border bg-white p-6">
+                {/* Welcome Header Skeleton */}
+                <div className="flex justify-between items-center pb-6 mb-6 border-b border-border">
+                    <div>
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-56" />
+                    </div>
+                    <Skeleton className="h-10 w-32 rounded-lg" />
+                </div>
+                
+                {/* Chart Controls Skeleton */}
                 <div className="flex justify-between items-center mb-6">
-                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-6 w-32" />
                     <div className="flex gap-2">
                         <Skeleton className="h-8 w-20" />
                         <Skeleton className="h-8 w-20" />
                     </div>
                 </div>
-                <div className="flex items-end justify-between h-[200px] gap-2">
+                
+                {/* Chart Bars Skeleton */}
+                <div className="flex items-end justify-between h-[320px] gap-2">
                     {[1,2,3,4,5,6,7,8,9,10].map(i => (
                         <Skeleton key={i} className={`w-full h-[${Math.floor(Math.random() * 80 + 20)}%]`} />
                     ))}

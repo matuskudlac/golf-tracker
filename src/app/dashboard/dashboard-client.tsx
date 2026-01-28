@@ -18,6 +18,7 @@ import { UserMenu } from '@/components/navigation/UserMenu'
 import { HeroStatsCard } from '@/components/dashboard/HeroStatsCard'
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart'
 import { RecentRoundsList } from '@/components/dashboard/RecentRoundsList'
+import { AddRoundDialog } from '@/components/rounds/AddRoundDialog'
 
 // Placeholder data - performance chart
 const performanceData = [
@@ -50,6 +51,13 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [addRoundDialogOpen, setAddRoundDialogOpen] = useState(false)
+
+  // Extract user name from email (before @) or use full email
+  const userName = initialUser?.email?.split('@')[0] || 'there'
+  
+  // Placeholder - will be replaced with real data in step 2
+  const roundsThisYear = 23
 
   const handleSignOut = async () => {
     await signOut()
@@ -111,7 +119,7 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Bento Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left Column - Hero Stats */}
           <div className="lg:col-span-1">
             <HeroStatsCard
@@ -127,8 +135,13 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
           </div>
 
           {/* Right Column - Chart and Rounds */}
-          <div className="lg:col-span-2 space-y-6">
-            <PerformanceChart data={performanceData} />
+          <div className="lg:col-span-2 space-y-4">
+            <PerformanceChart 
+              data={performanceData}
+              userName={userName}
+              roundsThisYear={roundsThisYear}
+              onLogRound={() => setAddRoundDialogOpen(true)}
+            />
             <RecentRoundsList
               rounds={recentRounds}
               onLogNewRound={() => console.log('Log new round clicked')}
@@ -136,6 +149,16 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
           </div>
         </div>
       </main>
+
+      {/* Add Round Dialog */}
+      <AddRoundDialog 
+        open={addRoundDialogOpen}
+        onOpenChange={setAddRoundDialogOpen}
+        onSuccess={() => {
+          setAddRoundDialogOpen(false)
+          router.refresh()
+        }}
+      />
     </div>
   )
 }
