@@ -14,7 +14,7 @@ import { AnimatedInput } from '@/components/ui/animated-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { Loader2, ChevronsUpDown, Check, ExternalLink, Edit3 } from 'lucide-react'
+import { Loader2, ChevronsUpDown, Check, ExternalLink, Edit3, RotateCcw } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { DatePickerInput } from '@/components/ui/input-date-picker'
@@ -60,6 +60,16 @@ export function AddRoundDialog({
   const [isProcessing, setIsProcessing] = useState(false)
   const [ocrCompleted, setOcrCompleted] = useState(false)
   const [showValidationError, setShowValidationError] = useState(false)
+  
+  // Stats tracking
+  const [includeStats, setIncludeStats] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
+  const [stats, setStats] = useState({
+    gir: '',
+    fairways: '',
+    upDowns: '',
+    putts: ''
+  })
 
   // Fetch course holes when course is selected
   useEffect(() => {
@@ -67,6 +77,13 @@ export function AddRoundDialog({
       fetchCourseHoles(selectedCourse.id)
     }
   }, [selectedCourse])
+
+  // Reset step when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep(1)
+    }
+  }, [open])
 
   const fetchCourseHoles = async (courseId: string) => {
     setLoadingCourseHoles(true)
@@ -97,6 +114,22 @@ export function AddRoundDialog({
 
   const calculatePar = (holes: any[], start: number, end: number) => {
     return holes.slice(start, end).reduce((sum, hole) => sum + (hole.par || 0), 0)
+  }
+
+  // Calculate number of par 3s for fairways calculation
+  const getPar3Count = () => {
+    if (!courseHoles || courseHoles.length === 0) return 0
+    return courseHoles
+      .slice(0, totalHoles)
+      .filter(hole => hole.par === 3)
+      .length
+  }
+
+  // Get max values for validation
+  const getMaxFairways = () => totalHoles - getPar3Count()
+  const getMaxUpDowns = () => {
+    const girValue = parseInt(stats.gir) || 0
+    return totalHoles - girValue
   }
 
   // Fetch courses on mount
@@ -213,6 +246,16 @@ export function AddRoundDialog({
       // Calculate total score
       const total_score = holesData.reduce((sum, hole) => sum + hole.score, 0);
 
+      // Prepare stats data (only if includeStats is true)
+      const statsData = includeStats ? {
+        greens_in_regulation: stats.gir ? parseInt(stats.gir) : null,
+        fairways_hit: stats.fairways ? parseInt(stats.fairways) : null,
+        fairways_opportunities: getMaxFairways(),
+        up_and_downs: stats.upDowns ? parseInt(stats.upDowns) : null,
+        up_and_downs_opportunities: getMaxUpDowns(),
+        total_putts: stats.putts ? parseInt(stats.putts) : null,
+      } : {};
+
       // Create the round
       const { data: round, error: roundError } = await supabase
         .from('rounds')
@@ -220,9 +263,11 @@ export function AddRoundDialog({
           user_id: user.id,
           course_id: selectedCourse.id,
           date_played: date.toISOString().split('T')[0],
+          holes_played: totalHoles,
           total_score,
           weather_conditions: weather || null,
           notes: notes || null,
+          ...statsData, // Include stats if provided
         }])
         .select()
         .single();
@@ -270,45 +315,60 @@ export function AddRoundDialog({
     setUploadedImage(null);
     setImagePreview(null);
     setOcrCompleted(false);
+    setIncludeStats(false);
+    setCurrentStep(1);
+    setStats({
+      gir: '',
+      fairways: '',
+      upDowns: '',
+      putts: ''
+    });
   };
 
   const dialogSize = 'sm:max-w-4xl'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${dialogSize} max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
-        <DialogHeader>
-          <DialogTitle>Add Round</DialogTitle>
+      <DialogContent className={`${dialogSize} h-[90vh] flex flex-col p-0 gap-0 overflow-hidden`}>
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
+          <DialogTitle>{currentStep === 1 ? 'Add Round' : 'Performance Statistics'}</DialogTitle>
           <DialogDescription>
-            Choose how you'd like to add your round
+            {currentStep === 1 ? "Choose how you'd like to add your round" : "Track your performance metrics (optional)"}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Mode Selector */}
-        <ToggleGroup 
-          type="single" 
-          value={mode} 
-          onValueChange={(value) => value && setMode(value as AddMode)}
-          className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg max-w-2xl mx-auto"
-        >
-          <ToggleGroupItem 
-            value="manual"
-            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+        <div className="flex-1 overflow-y-auto p-6">
+
+        {/* Mode Selector - Only show on Step 1 */}
+        {currentStep === 1 && (
+          <ToggleGroup 
+            type="single" 
+            value={mode} 
+            onValueChange={(value) => value && setMode(value as AddMode)}
+            className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg max-w-2xl mx-auto"
           >
-            <Edit3 className="h-4 w-4 mr-2" />
-            Manual Entry
-          </ToggleGroupItem>
-          
-          <ToggleGroupItem 
-            value="upload"
-            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Scorecard
-          </ToggleGroupItem>
-        </ToggleGroup>
+            <ToggleGroupItem 
+              value="manual"
+              className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Manual Entry
+            </ToggleGroupItem>
+            
+            <ToggleGroupItem 
+              value="upload"
+              className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Scorecard
+            </ToggleGroupItem>
+          </ToggleGroup>
+        )}
 
         <div className="space-y-6">
+          {/* Step 1: Round Entry Form */}
+          {currentStep === 1 && (
+            <>
           {/* Manual Entry Form */}
           {mode === 'manual' && (
             <>
@@ -368,31 +428,62 @@ export function AddRoundDialog({
                 </div>
               </div>
 
-              {/* Date and Holes */}
+              {/* Date and Holes/Stats Row */}
               <div className="grid grid-cols-2 gap-4">
                 <DatePickerInput
                   date={date}
                   onDateChange={setDate}
                   label="Date Played *"
                   placeholder="dd/mm/yyyy"
+                  maxDate={new Date()}
                 />
-                <div className="space-y-2">
-                  <Label>Number of Holes *</Label>
-                  <div className="flex gap-2">
-                    <Toggle
-                      pressed={totalHoles === 9}
-                      onPressedChange={() => setTotalHoles(9)}
-                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                <div className="flex gap-4">
+                  {/* Number of Holes */}
+                  <div className="space-y-2 flex-1">
+                    <Label>Holes *</Label>
+                    <ToggleGroup 
+                      type="single" 
+                      value={totalHoles.toString()}
+                      onValueChange={(value) => value && setTotalHoles(parseInt(value) as 9 | 18)}
+                      className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg w-full"
                     >
-                      9 Holes
-                    </Toggle>
-                    <Toggle
-                      pressed={totalHoles === 18}
-                      onPressedChange={() => setTotalHoles(18)}
-                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                      <ToggleGroupItem 
+                        value="9"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        9
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="18"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        18
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+
+                  {/* Include Stats */}
+                  <div className="space-y-2 flex-1">
+                    <Label>Stats</Label>
+                    <ToggleGroup 
+                      type="single" 
+                      value={includeStats ? 'yes' : 'no'}
+                      onValueChange={(value) => setIncludeStats(value === 'yes')}
+                      className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg w-full"
                     >
-                      18 Holes
-                    </Toggle>
+                      <ToggleGroupItem 
+                        value="no"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        No
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="yes"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        Yes
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
                 </div>
               </div>
@@ -438,6 +529,7 @@ export function AddRoundDialog({
                       holeScores={holeScores}
                       totalHoles={totalHoles}
                       onUpdateScore={updateHoleScore}
+                      onReset={() => setHoleScores(Array(18).fill(0))}
                     />
                   ) : null}
                 </>
@@ -512,7 +604,7 @@ export function AddRoundDialog({
                 )}
               </div>
 
-              {/* Date and Holes */}
+              {/* Date and Holes/Stats Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <DatePickerInput
@@ -523,28 +615,60 @@ export function AddRoundDialog({
                     }}
                     label="Date Played *"
                     placeholder="dd/mm/yyyy"
+                    maxDate={new Date()}
                   />
                   {showValidationError && !date && (
                     <p className="text-xs text-red-500">Please select a date before uploading</p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label>Number of Holes *</Label>
-                  <div className="flex gap-2">
-                    <Toggle
-                      pressed={totalHoles === 9}
-                      onPressedChange={() => setTotalHoles(9)}
-                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+
+                <div className="flex gap-4">
+                  {/* Number of Holes */}
+                  <div className="space-y-2 flex-1">
+                    <Label>Holes *</Label>
+                    <ToggleGroup 
+                      type="single" 
+                      value={totalHoles.toString()}
+                      onValueChange={(value) => value && setTotalHoles(parseInt(value) as 9 | 18)}
+                      className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg w-full"
                     >
-                      9 Holes
-                    </Toggle>
-                    <Toggle
-                      pressed={totalHoles === 18}
-                      onPressedChange={() => setTotalHoles(18)}
-                      className="data-[state=on]:bg-brand-700 data-[state=on]:text-white flex-1"
+                      <ToggleGroupItem 
+                        value="9"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        9
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="18"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        18
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+
+                  {/* Include Stats */}
+                  <div className="space-y-2 flex-1">
+                    <Label>Stats</Label>
+                    <ToggleGroup 
+                      type="single" 
+                      value={includeStats ? 'yes' : 'no'}
+                      onValueChange={(value) => setIncludeStats(value === 'yes')}
+                      className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg w-full"
                     >
-                      18 Holes
-                    </Toggle>
+                      <ToggleGroupItem 
+                        value="no"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        No
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="yes"
+                        className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md w-full"
+                      >
+                        Yes
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
                 </div>
               </div>
@@ -581,12 +705,12 @@ export function AddRoundDialog({
                     <div 
                       {...getRootProps()} 
                       className={cn(
-                        "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
+                        "border-2 border-dashed border-brand-700 rounded-lg h-[180px] flex flex-col items-center justify-center transition-colors cursor-pointer",
                         isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
                       )}
                     >
                       <input {...getInputProps()} />
-                      <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
+                      <Upload className="h-12 w-12 text-brand-700 mb-3" />
                       <p className="text-sm font-medium text-brand-700">
                         {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
                       </p>
@@ -595,15 +719,17 @@ export function AddRoundDialog({
                       </p>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-8 border-2 border-brand-700 rounded-lg bg-brand-50">
-                      <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
-                      <span className="ml-2 text-sm text-slate-600">
-                        Extracting scores from scorecard...
+                    <div className="flex flex-col items-center justify-center h-[180px] border-2 border-brand-700 rounded-lg bg-brand-50">
+                      <Loader2 className="h-8 w-8 animate-spin text-brand-700 mb-3" />
+                      <span className="text-sm font-medium text-slate-700">
+                        Extracting Data from Scorecard...
                       </span>
                     </div>
                   )
                 ) : null}
               </div>
+
+
 
               {/* Scorecard Grid - Show after OCR completes */}
               {selectedCourse && ocrCompleted && (
@@ -622,26 +748,181 @@ export function AddRoundDialog({
                       holeScores={holeScores}
                       totalHoles={totalHoles}
                       onUpdateScore={updateHoleScore}
+                      onReset={() => {
+                        setOcrCompleted(false)
+                        setUploadedImage(null)
+                        setImagePreview(null)
+                        setHoleScores(Array(18).fill(0))
+                      }}
                     />
                   ) : null}
                 </>
-              )}
-            </div>
+                )}
+              </div>
             </>
+          )}
+          </>
+        )}
+
+          {/* Step 2: Stats Entry */}
+          {currentStep === 2 && (
+            <div className="space-y-6 pt-4">
+              {/* GIR Input */}
+
+              {/* GIR Input */}
+              <div className="space-y-2">
+                <Label htmlFor="gir">Greens in Regulation</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="gir"
+                    type="number"
+                    value={stats.gir}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0
+                      if (value <= totalHoles) {
+                        setStats({ ...stats, gir: e.target.value })
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
+                    placeholder="0"
+                    min={0}
+                    max={totalHoles}
+                  />
+                  <div className="flex items-center gap-2 min-w-[5rem]">
+                    <span className="text-slate-600">/ {totalHoles}</span>
+                    <span className="text-sm font-medium text-brand-700">
+                      {stats.gir ? Math.round((parseInt(stats.gir) / totalHoles) * 100) : 0}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fairways Input */}
+              <div className="space-y-2">
+                <Label htmlFor="fairways">Fairways Hit</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="fairways"
+                    type="number"
+                    value={stats.fairways}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0
+                      if (value <= getMaxFairways()) {
+                        setStats({ ...stats, fairways: e.target.value })
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
+                    placeholder="0"
+                    min={0}
+                    max={getMaxFairways()}
+                  />
+                  <div className="flex items-center gap-2 min-w-[5rem]">
+                    <span className="text-slate-600">/ {getMaxFairways()}</span>
+                     <span className="text-sm font-medium text-brand-700">
+                      {stats.fairways && getMaxFairways() > 0 ? Math.round((parseInt(stats.fairways) / getMaxFairways()) * 100) : 0}%
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">Excludes par 3s ({getPar3Count()} par 3s on this course)</p>
+              </div>
+
+              {/* Up & Downs Input */}
+              <div className="space-y-2">
+                <Label htmlFor="upDowns">Up & Downs</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="upDowns"
+                    type="number"
+                    value={stats.upDowns}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0
+                      if (value <= getMaxUpDowns()) {
+                        setStats({ ...stats, upDowns: e.target.value })
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
+                    placeholder="0"
+                    min={0}
+                    max={getMaxUpDowns()}
+                  />
+                  <div className="flex items-center gap-2 min-w-[5rem]">
+                    <span className="text-slate-600">/ {getMaxUpDowns()}</span>
+                    <span className="text-sm font-medium text-brand-700">
+                      {stats.upDowns && getMaxUpDowns() > 0 ? Math.round((parseInt(stats.upDowns) / getMaxUpDowns()) * 100) : 0}%
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">Holes where you missed the green but made par or better</p>
+              </div>
+
+              {/* Total Putts Input */}
+              <div className="space-y-2">
+                <Label htmlFor="putts">Total Putts</Label>
+                <input
+                  id="putts"
+                  type="number"
+                  value={stats.putts}
+                  onChange={(e) => setStats({ ...stats, putts: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
+                  placeholder="0"
+                  min={0}
+                />
+              </div>
+
+              {/* Pagination Dots */}
+
+            </div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
+
+
+
+          </div>
+        </div>
+
+        {/* Sticky Footer */}
+        <div className="px-6 py-4 border-t bg-slate-50/50 flex items-center justify-between shrink-0 relative">
+          {/* Left: Back Button */}
+          <div className="z-10">
+            {currentStep === 2 && (
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep(1)}
+              >
+                Back
+              </Button>
+            )}
+          </div>
+
+          {/* Center: Pagination Dots */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex justify-center gap-2">
+            {includeStats && (
+              <>
+                <div className={cn("w-2 h-2 rounded-full transition-colors", currentStep === 1 ? "bg-brand-700" : "bg-slate-300")}></div>
+                <div className={cn("w-2 h-2 rounded-full transition-colors", currentStep === 2 ? "bg-brand-700" : "bg-slate-300")}></div>
+              </>
+            )}
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex gap-2 justify-end z-10">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={() => {
+                if (includeStats && currentStep === 1) {
+                  setCurrentStep(2)
+                } else {
+                  handleSubmit()
+                }
+              }}
               disabled={loading || !selectedCourse || !date}
-              className="bg-brand-700 hover:bg-brand-800 text-white"
+              className="bg-brand-700 hover:bg-brand-800 text-white min-w-[100px]"
             >
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Add Round
+              {includeStats && currentStep === 1 ? "Continue" : "Save Round"}
             </Button>
           </div>
         </div>
@@ -656,9 +937,10 @@ interface ScorecardGridProps {
   holeScores: number[]
   totalHoles: 9 | 18
   onUpdateScore: (index: number, score: number) => void
+  onReset?: () => void
 }
 
-function ScorecardGrid({ courseHoles, holeScores, totalHoles, onUpdateScore }: ScorecardGridProps) {
+function ScorecardGrid({ courseHoles, holeScores, totalHoles, onUpdateScore, onReset }: ScorecardGridProps) {
   const front9Holes = courseHoles.slice(0, 9)
   const back9Holes = courseHoles.slice(9, 18)
   const front9Scores = holeScores.slice(0, 9)
@@ -674,7 +956,20 @@ function ScorecardGrid({ courseHoles, holeScores, totalHoles, onUpdateScore }: S
 
   const renderNine = (holes: any[], scores: number[], startIndex: number, title: string) => (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-brand-700">{title}</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-sm font-semibold text-brand-700">{title}</h3>
+        {title === 'Front 9' && onReset && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onReset}
+            className="h-6 px-2 text-slate-500 hover:text-brand-700 hover:bg-brand-50"
+          >
+            <RotateCcw className="h-3 w-3 mr-1.5" />
+            <span className="text-xs">Reset Scorecard</span>
+          </Button>
+        )}
+      </div>
       <div className="border-2 border-brand-700 rounded-lg overflow-hidden bg-white">
         <table className="w-full text-xs border-collapse">
           <thead>

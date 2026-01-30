@@ -43,6 +43,7 @@ interface DatePickerInputProps {
   label?: string
   placeholder?: string
   id?: string
+  maxDate?: Date
 }
 
 export function DatePickerInput({
@@ -50,7 +51,8 @@ export function DatePickerInput({
   onDateChange,
   label = "Date",
   placeholder = "Select date",
-  id = "date-picker"
+  id = "date-picker",
+  maxDate
 }: DatePickerInputProps) {
   const [open, setOpen] = React.useState(false)
   const [month, setMonth] = React.useState<Date | undefined>(date)
@@ -117,6 +119,7 @@ export function DatePickerInput({
                 selected={date}
                 month={month}
                 onMonthChange={setMonth}
+                disabled={maxDate ? { after: maxDate } : undefined}
                 onSelect={(selectedDate) => {
                   onDateChange(selectedDate)
                   setValue(formatDate(selectedDate))
