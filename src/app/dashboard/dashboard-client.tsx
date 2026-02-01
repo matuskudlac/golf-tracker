@@ -20,34 +20,24 @@ import { PerformanceChart } from '@/components/dashboard/PerformanceChart'
 import { RecentRoundsList } from '@/components/dashboard/RecentRoundsList'
 import { AddRoundDialog } from '@/components/rounds/AddRoundDialog'
 
-// Placeholder data - performance chart
-const performanceData = [
-  { date: "Jan 1", score: 85, fairways: 64, gir: 56, putts: 32 },
-  { date: "Jan 8", score: 82, fairways: 71, gir: 61, putts: 30 },
-  { date: "Jan 15", score: 88, fairways: 57, gir: 50, putts: 34 },
-  { date: "Jan 22", score: 84, fairways: 64, gir: 56, putts: 31 },
-  { date: "Jan 29", score: 81, fairways: 71, gir: 67, putts: 29 },
-  { date: "Feb 5", score: 79, fairways: 79, gir: 72, putts: 28 },
-  { date: "Feb 12", score: 83, fairways: 64, gir: 61, putts: 30 },
-  { date: "Feb 19", score: 80, fairways: 71, gir: 67, putts: 29 },
-  { date: "Feb 26", score: 78, fairways: 79, gir: 72, putts: 27 },
-  { date: "Mar 5", score: 82, fairways: 71, gir: 67, putts: 30 },
-]
 
-// Placeholder data - recent rounds
-const recentRounds = [
-  { id: '1', date: 'Mar 5, 2026', courseName: 'Pebble Beach Golf Links', score: 82, par: 72 },
-  { id: '2', date: 'Feb 26, 2026', courseName: 'Augusta National', score: 78, par: 72 },
-  { id: '3', date: 'Feb 19, 2026', courseName: 'St Andrews Old Course', score: 80, par: 72 },
-  { id: '4', date: 'Feb 12, 2026', courseName: 'Pinehurst No. 2', score: 83, par: 72 },
-  { id: '5', date: 'Feb 5, 2026', courseName: 'Oakmont Country Club', score: 79, par: 72 },
-]
 
 interface DashboardClientProps {
   initialUser: any
+  initialRounds: any[]
+  initialStats: {
+    scoringAverage: number
+    trend: number
+    handicap: number
+    handicapTrend: number
+    fairwaysHit: number
+    greensInReg: number
+    puttsPerRound: number
+    scrambling: number
+  }
 }
 
-export function DashboardClient({ initialUser }: DashboardClientProps) {
+export function DashboardClient({ initialUser, initialRounds, initialStats }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -56,8 +46,45 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
   // Extract user name from email (before @) or use full email
   const userName = initialUser?.email?.split('@')[0] || 'there'
   
-  // Placeholder - will be replaced with real data in step 2
-  const roundsThisYear = 23
+  // Calculate rounds this year
+  const currentYear = new Date().getFullYear()
+  const roundsThisYear = initialRounds.filter(r => new Date(r.date_played).getFullYear() === currentYear).length
+  
+  // Prepare Performance Chart Data (reverse to show oldest to newest)
+  const performanceData = [...initialRounds].reverse().map(round => {
+    // Calculate percentages for chart if opportunities exist, otherwise use null or 0
+    // Note: This matches the structure expected by PerformanceChart, but we might need to adjust logic
+    // if PerformanceChart expects raw values or percentages. Assuming percentages for consistency.
+    
+    // For chart, we might want purely score, or we can calculate derived stats
+    // The previous placeholder used: { date, score, fairways, gir, putts }
+    // Fairways/GIR in placeholder seemed to be percentages (e.g. 64, 56)
+    
+    const fairwaysPct = round.fairways_opportunities > 0 
+      ? Math.round((round.fairways_hit / round.fairways_opportunities) * 100) 
+      : 0
+      
+    const girPct = round.holes_played > 0
+      ? Math.round((round.greens_in_regulation / round.holes_played) * 100)
+      : 0
+      
+    return {
+      date: new Date(round.date_played).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      score: round.total_score,
+      fairways: fairwaysPct,
+      gir: girPct,
+      putts: round.total_putts || 0
+    }
+  })
+
+  // Prepare Recent Rounds List Data
+  const recentRoundsList = initialRounds.slice(0, 5).map(round => ({
+    id: round.id,
+    date: new Date(round.date_played).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    courseName: round.courses?.name || 'Unknown Course',
+    score: round.total_score,
+    par: round.courses?.par || 72 // Default to 72 if not available
+  }))
 
   const handleSignOut = async () => {
     await signOut()
@@ -123,14 +150,14 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
           {/* Left Column - Hero Stats */}
           <div className="lg:col-span-1">
             <HeroStatsCard
-              scoringAverage={82}
-              trend={-3}
-              handicap={12.4}
-              handicapTrend={-0.8}
-              fairwaysHit={71}
-              greensInReg={67}
-              puttsPerRound={29.5}
-              scrambling={65}
+              scoringAverage={initialStats.scoringAverage}
+              trend={initialStats.trend}
+              handicap={initialStats.handicap}
+              handicapTrend={initialStats.handicapTrend}
+              fairwaysHit={initialStats.fairwaysHit}
+              greensInReg={initialStats.greensInReg}
+              puttsPerRound={initialStats.puttsPerRound}
+              scrambling={initialStats.scrambling}
             />
           </div>
 
@@ -143,7 +170,7 @@ export function DashboardClient({ initialUser }: DashboardClientProps) {
               onLogRound={() => setAddRoundDialogOpen(true)}
             />
             <RecentRoundsList
-              rounds={recentRounds}
+              rounds={recentRoundsList}
               onLogNewRound={() => console.log('Log new round clicked')}
             />
           </div>

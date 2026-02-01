@@ -11,13 +11,12 @@ import {
 import { AnimatedInput } from '@/components/ui/animated-input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Loader2, Upload, Check, ChevronsUpDown } from 'lucide-react'
+import { Loader2, Upload, Check, ChevronsUpDown, Zap, Edit3 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { useDropzone } from 'react-dropzone'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { Zap, Edit3 } from 'lucide-react'
 
 type AddMode = 'quick' | 'upload' | 'manual'
 
@@ -50,6 +49,11 @@ export function AddCourseDialog({
   const [totalHoles, setTotalHoles] = useState<9 | 18>(18)
   const [teeColor, setTeeColor] = useState('Yellow')
   const [teeColorOpen, setTeeColorOpen] = useState(false)
+  
+  // New State for Ratings
+  const [courseRating, setCourseRating] = useState('')
+  const [slopeRating, setSlopeRating] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [processingOCR, setProcessingOCR] = useState(false)
   const [ocrCompleted, setOcrCompleted] = useState(false)
@@ -72,6 +76,8 @@ export function AddCourseDialog({
       setCountry(courseData.country || '')
       setTotalHoles(courseData.total_holes || 18)
       setTeeColor(courseData.tee_color || 'Yellow')
+      setCourseRating(courseData.course_rating ? courseData.course_rating.toString() : '')
+      setSlopeRating(courseData.slope_rating ? courseData.slope_rating.toString() : '')
       
       // Fetch existing hole data
       const fetchHoles = async () => {
@@ -132,18 +138,23 @@ export function AddCourseDialog({
   const handleSubmit = async () => {
     setLoading(true)
     try {
+      const payload = {
+        name: courseName,
+        city: city || null,
+        country: country || null,
+        total_holes: totalHoles,
+        // Only save tee color and ratings if not in Quick Add mode
+        tee_color: mode !== 'quick' ? (teeColor || null) : null,
+        course_rating: (mode !== 'quick' && courseRating) ? parseFloat(courseRating) : null,
+        slope_rating: (mode !== 'quick' && slopeRating) ? parseInt(slopeRating) : null,
+      }
+
       if (editMode && courseData) {
         // Update existing course
         const courseResponse = await fetch(`/api/courses/${courseData.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: courseName,
-            city: city || null,
-            country: country || null,
-            total_holes: totalHoles,
-            tee_color: teeColor,
-          }),
+          body: JSON.stringify(payload),
         })
 
         if (!courseResponse.ok) throw new Error('Failed to update course')
@@ -161,13 +172,7 @@ export function AddCourseDialog({
         const courseResponse = await fetch('/api/courses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: courseName,
-            city: city || null,
-            country: country || null,
-            total_holes: totalHoles,
-            tee_color: mode === 'upload' ? teeColor : null,
-          }),
+          body: JSON.stringify(payload),
         })
 
         if (!courseResponse.ok) throw new Error('Failed to create course')
@@ -200,6 +205,8 @@ export function AddCourseDialog({
     setCourseName('')
     setCity('')
     setCountry('')
+    setCourseRating('')
+    setSlopeRating('')
     setTotalHoles(18)
     setOcrCompleted(false)
     setHoleData(
@@ -220,8 +227,8 @@ export function AddCourseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>
             {editMode ? 'Edit Course' : 'Add Course'}
           </DialogTitle>
@@ -230,218 +237,248 @@ export function AddCourseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Mode Selector */}
-        <ToggleGroup 
-          type="single" 
-          value={mode} 
-          onValueChange={(value) => value && setMode(value as AddMode)}
-          className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-lg max-w-2xl mx-auto"
-        >
-          <ToggleGroupItem 
-            value="quick" 
-            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Mode Selector */}
+          <ToggleGroup 
+            type="single" 
+            value={mode} 
+            onValueChange={(value) => value && setMode(value as AddMode)}
+            className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-lg max-w-2xl mx-auto mb-6"
           >
-            <Zap className="h-4 w-4 mr-2" />
-            Quick Add
-          </ToggleGroupItem>
-          
-          <ToggleGroupItem 
-            value="upload"
-            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Scorecard
-          </ToggleGroupItem>
-          
-          <ToggleGroupItem 
-            value="manual"
-            className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
-          >
-            <Edit3 className="h-4 w-4 mr-2" />
-            Manual Entry
-          </ToggleGroupItem>
-        </ToggleGroup>
+            <ToggleGroupItem 
+              value="quick" 
+              className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Quick Add
+            </ToggleGroupItem>
+            
+            <ToggleGroupItem 
+              value="upload"
+              className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Scorecard
+            </ToggleGroupItem>
+            
+            <ToggleGroupItem 
+              value="manual"
+              className="data-[state=on]:bg-white data-[state=on]:text-brand-700 data-[state=on]:shadow-sm transition-all !rounded-md"
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Manual Entry
+            </ToggleGroupItem>
+          </ToggleGroup>
 
-        <div className="space-y-6">
-          {/* Basic Course Info */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="courseName">Course Name *</Label>
-              <AnimatedInput
-                id="courseName"
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
-                placeholder="e.g., Pebble Beach Golf Links"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6">
+            {/* Basic Course Info */}
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="courseName">Course Name *</Label>
                 <AnimatedInput
-                  id="city"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g., Pebble Beach"
+                  id="courseName"
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
+                  placeholder="e.g., Pebble Beach Golf Links"
+                  required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <AnimatedInput
-                  id="country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="e.g., USA"
-                />
-              </div>
-            </div>
 
-            {mode !== 'quick' && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Tee Color</Label>
-                  <Popover open={teeColorOpen} onOpenChange={setTeeColorOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={teeColorOpen}
-                        className="w-full justify-between font-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-700 focus-visible:border-brand-700"
-                      >
-                        {teeColor || "Select tee color..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command shouldFilter={false} className="[&_[cmdk-input-wrapper]]:border-0 [&_[cmdk-input-wrapper]]:focus-within:ring-0 [&_[cmdk-input]]:focus:ring-0 [&_[cmdk-input]]:focus-visible:ring-0">
-                        <CommandInput 
-                          placeholder="Type or select..." 
-                          className="focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none !ring-0 !outline-none [&>input]:focus:ring-0 [&>input]:focus-visible:ring-0"
-                          value={teeColor}
-                          onValueChange={setTeeColor}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              setTeeColorOpen(false)
-                            }
-                          }}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            <div className="py-2 text-center text-sm">
-                              Type custom color and press Enter
-                            </div>
-                          </CommandEmpty>
-                          <CommandGroup heading="Common Tee Colors">
-                            {commonTeeColors.map((color) => (
-                              <CommandItem
-                                key={color}
-                                value={color}
-                                onSelect={(currentValue) => {
-                                  setTeeColor(currentValue)
-                                  setTeeColorOpen(false)
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    teeColor === color ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {color}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Label htmlFor="city">City</Label>
+                  <AnimatedInput
+                    id="city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g., Pebble Beach"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Number of Holes</Label>
-                  <ToggleGroup 
-                    type="single" 
-                    value={totalHoles.toString()} 
-                    onValueChange={(value) => value && setTotalHoles(parseInt(value) as 9 | 18)}
-                    className="!w-full gap-2 p-1 bg-slate-100 rounded-lg"
-                  >
-                    <ToggleGroupItem 
-                      value="9"
-                      className="flex-1 data-[state=on]:bg-brand-700 data-[state=on]:text-white data-[state=on]:shadow-sm transition-all !rounded-md"
-                    >
-                      9 Holes
-                    </ToggleGroupItem>
-                    <ToggleGroupItem 
-                      value="18"
-                      className="flex-1 data-[state=on]:bg-brand-700 data-[state=on]:text-white data-[state=on]:shadow-sm transition-all !rounded-md"
-                    >
-                      18 Holes
-                    </ToggleGroupItem>
-                  </ToggleGroup>
+                  <Label htmlFor="country">Country</Label>
+                  <AnimatedInput
+                    id="country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="e.g., USA"
+                  />
                 </div>
               </div>
+
+              {mode !== 'quick' && (
+                <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cr">Course Rating (CR)</Label>
+                    <AnimatedInput
+                      id="cr"
+                      type="number"
+                      value={courseRating}
+                      onChange={(e) => setCourseRating(e.target.value)}
+                      placeholder="e.g., 72.1"
+                      step="0.1"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="slope">Slope Rating (SR)</Label>
+                    <AnimatedInput
+                      id="slope"
+                      type="number"
+                      value={slopeRating}
+                      onChange={(e) => setSlopeRating(e.target.value)}
+                      placeholder="e.g., 130"
+                      min={55}
+                      max={155}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tee Color</Label>
+                    <Popover open={teeColorOpen} onOpenChange={setTeeColorOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={teeColorOpen}
+                          className="w-full justify-between font-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-700 focus-visible:border-brand-700"
+                        >
+                          {teeColor || "Select tee color..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command shouldFilter={false} className="[&_[cmdk-input-wrapper]]:border-0 [&_[cmdk-input-wrapper]]:focus-within:ring-0 [&_[cmdk-input]]:focus:ring-0 [&_[cmdk-input]]:focus-visible:ring-0">
+                          <CommandInput 
+                            placeholder="Type or select..." 
+                            className="focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none !ring-0 !outline-none [&>input]:focus:ring-0 [&>input]:focus-visible:ring-0"
+                            value={teeColor}
+                            onValueChange={setTeeColor}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                setTeeColorOpen(false)
+                              }
+                            }}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              <div className="py-2 text-center text-sm">
+                                Type custom color and press Enter
+                              </div>
+                            </CommandEmpty>
+                            <CommandGroup heading="Common Tee Colors">
+                              {commonTeeColors.map((color) => (
+                                <CommandItem
+                                  key={color}
+                                  value={color}
+                                  onSelect={(currentValue) => {
+                                    setTeeColor(currentValue)
+                                    setTeeColorOpen(false)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      teeColor === color ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {color}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Number of Holes</Label>
+                    <ToggleGroup 
+                      type="single" 
+                      value={totalHoles.toString()} 
+                      onValueChange={(value) => value && setTotalHoles(parseInt(value) as 9 | 18)}
+                      className="!w-full gap-2 p-1 bg-slate-100 rounded-lg"
+                    >
+                      <ToggleGroupItem 
+                        value="9"
+                        className="flex-1 data-[state=on]:bg-brand-700 data-[state=on]:text-white data-[state=on]:shadow-sm transition-all !rounded-md"
+                      >
+                        9 Holes
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="18"
+                        className="flex-1 data-[state=on]:bg-brand-700 data-[state=on]:text-white data-[state=on]:shadow-sm transition-all !rounded-md"
+                      >
+                        18 Holes
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                </div>
+                </>
+              )}
+            </div>
+
+            {/* Upload Scorecard */}
+            {mode === 'upload' && (
+              <div className="space-y-4">
+
+                {!ocrCompleted && <Label>Upload Scorecard</Label>}
+                {!ocrCompleted ? (
+                  !processingOCR ? (
+                    <div 
+                      {...getRootProps()} 
+                      className={cn(
+                        "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
+                        isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
+                      )}
+                    >
+                      <input {...getInputProps()} />
+                      <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
+                      <p className="text-sm font-medium text-brand-700">
+                        {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        PNG, JPG or JPEG (MAX. 10MB)
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 border-2 border-brand-700 rounded-lg bg-brand-50">
+                      <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
+                      <span className="ml-2 text-sm text-slate-600">
+                        Processing scorecard...
+                      </span>
+                    </div>
+                  )
+                ) : null}
+              </div>
+            )}
+
+            {/* Scorecard Grid */}
+            {mode !== 'quick' && !processingOCR && (mode === 'manual' || ocrCompleted) && (
+              <ScorecardGrid
+                holeData={holeData}
+                totalHoles={totalHoles}
+                onUpdate={updateHoleData}
+              />
             )}
           </div>
+        </div>
 
-          {/* Upload Scorecard */}
-          {mode === 'upload' && (
-            <div className="space-y-4">
-
-              {!ocrCompleted && <Label>Upload Scorecard</Label>}
-              {!ocrCompleted ? (
-                !processingOCR ? (
-                  <div 
-                    {...getRootProps()} 
-                    className={cn(
-                      "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
-                      isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
-                    )}
-                  >
-                    <input {...getInputProps()} />
-                    <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
-                    <p className="text-sm font-medium text-brand-700">
-                      {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      PNG, JPG or JPEG (MAX. 10MB)
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-8 border-2 border-brand-700 rounded-lg bg-brand-50">
-                    <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
-                    <span className="ml-2 text-sm text-slate-600">
-                      Processing scorecard...
-                    </span>
-                  </div>
-                )
-              ) : null}
-            </div>
-          )}
-
-          {/* Scorecard Grid */}
-          {mode !== 'quick' && !processingOCR && (mode === 'manual' || ocrCompleted) && (
-            <ScorecardGrid
-              holeData={holeData}
-              totalHoles={totalHoles}
-              onUpdate={updateHoleData}
-            />
-          )}
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!courseName || loading}
-              className="bg-brand-700 hover:bg-brand-800 text-white"
-            >
-              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editMode ? 'Save Changes' : 'Add Course'}
-            </Button>
-          </div>
+        {/* Sticky Footer Actions */}
+        <div className="px-6 py-4 border-t bg-slate-50/50 flex items-center justify-end gap-2 shrink-0 relative">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!courseName || loading}
+            className="bg-brand-700 hover:bg-brand-800 text-white"
+          >
+            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {editMode ? 'Save Changes' : 'Add Course'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
