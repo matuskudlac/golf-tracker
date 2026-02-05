@@ -430,12 +430,12 @@ export function AddCourseDialog({
                     <div 
                       {...getRootProps()} 
                       className={cn(
-                        "border-2 border-dashed border-brand-700 rounded-lg p-8 text-center transition-colors cursor-pointer",
+                        "border-2 border-dashed border-brand-700 rounded-lg h-[180px] flex flex-col items-center justify-center transition-colors cursor-pointer",
                         isDragActive ? "bg-brand-100 border-brand-800" : "hover:bg-brand-50"
                       )}
                     >
                       <input {...getInputProps()} />
-                      <Upload className="h-12 w-12 mx-auto text-brand-700 mb-3" />
+                      <Upload className="h-12 w-12 text-brand-700 mb-3" />
                       <p className="text-sm font-medium text-brand-700">
                         {isDragActive ? "Drop the scorecard here" : "Click to upload or drag and drop"}
                       </p>
@@ -444,9 +444,9 @@ export function AddCourseDialog({
                       </p>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-8 border-2 border-brand-700 rounded-lg bg-brand-50">
-                      <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
-                      <span className="ml-2 text-sm text-slate-600">
+                    <div className="flex flex-col items-center justify-center h-[180px] border-2 border-brand-700 rounded-lg bg-brand-50">
+                      <Loader2 className="h-8 w-8 animate-spin text-brand-700 mb-3" />
+                      <span className="text-sm font-medium text-slate-700">
                         Processing scorecard...
                       </span>
                     </div>

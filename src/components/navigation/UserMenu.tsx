@@ -35,7 +35,7 @@ export function UserMenu({ user }: UserMenuProps) {
   }
 
   const handleSettings = () => {
-    router.push('/settings')
+    router.push('/settings/account')
   }
 
   // Get user's initials for avatar fallback
