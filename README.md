@@ -3,14 +3,14 @@
 A premium, high-performance golf tracking application with assistance provided by AI. Upload a photo of your physical scorecard and let Gemini Vision extract your scores automatically — or enter them manually. Track every round, manage your courses, and monitor your performance over time.
 
 ```markdown
-## 🛠️ Tech Stack
+Tech Stack
 
-- **Next.js 16**
-- **React 19**
-- **TypeScript 5**
-- **Supabase** (PostgreSQL)
-- **Tailwind CSS 4**
-- **Gemini 1.5 Flash**
+- Next.js 16
+- React 19
+- TypeScript 5
+- Supabase (PostgreSQL)
+- Tailwind CSS 4
+- Gemini 1.5 Flash
 ```
 
 ## Features
